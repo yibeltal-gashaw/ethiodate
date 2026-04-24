@@ -1,0 +1,313 @@
+/**
+ * Ethiopian Calendar Utility
+ * Handles Gregorian ↔ Ethiopian date conversions,
+ * holiday data, and Amharic/English localization.
+ */
+
+// ─── Ethiopian Calendar Epoch ────────────────────────────────────────────────
+// Ethiopian calendar is ~7–8 years behind Gregorian (Julian offset)
+// Ethiopian year starts on Meskerem 1 = Sept 11 (or Sept 12 in Gregorian leap year eve)
+
+export const ET_MONTHS_EN = [
+  'Meskerem', 'Tikimt', 'Hidar', 'Tahsas',
+  'Tir', 'Yekatit', 'Megabit', 'Miazia',
+  'Ginbot', 'Sene', 'Hamle', 'Nehase', 'Pagume'
+];
+
+export const ET_MONTHS_AM = [
+  'መስከረም', 'ጥቅምት', 'ህዳር', 'ታህሳስ',
+  'ጥር', 'የካቲት', 'መጋቢት', 'ሚያዚያ',
+  'ግንቦት', 'ሰኔ', 'ሐምሌ', 'ነሐሴ', 'ጳጉሜ'
+];
+
+export const ET_DAYS_EN = [
+  'Ehud', 'Segno', 'Maksegno', 'Rob', 'Hamus', 'Arb', 'Kidame'
+];
+
+export const ET_DAYS_AM = [
+  'እሁድ', 'ሰኞ', 'ማክሰኞ', 'ረቡዕ', 'ሐሙስ', 'አርብ', 'ቅዳሜ'
+];
+
+// ─── Conversion Core ─────────────────────────────────────────────────────────
+
+/**
+ * Convert a Gregorian Date object to Ethiopian date.
+ * Returns { year, month (1-13), day }
+ */
+export function gregorianToEthiopian(gDate) {
+  const GY = gDate.getFullYear();
+  const GM = gDate.getMonth() + 1; // JS month is 0-indexed
+  const GD = gDate.getDate();
+
+  // Julian Day Number from Gregorian
+  const jdn = gregorianToJDN(GY, GM, GD);
+
+  return jdnToEthiopian(jdn);
+}
+
+/**
+ * Convert Ethiopian date { year, month, day } to a Gregorian Date object.
+ */
+export function ethiopianToGregorian(eYear, eMonth, eDay) {
+  const jdn = ethiopianToJDN(eYear, eMonth, eDay);
+  return jdnToGregorian(jdn);
+}
+
+// ─── JDN Helpers ─────────────────────────────────────────────────────────────
+
+function gregorianToJDN(y, m, d) {
+  return (
+    Math.floor((367 * y) - Math.floor((7 * (y + Math.floor((m + 9) / 12))) / 4) -
+    Math.floor((3 * (Math.floor((y + (m - 9) / 7) / 100) + 1)) / 4) +
+    Math.floor((275 * m) / 9) + d + 1721028.5) + 0.5
+  );
+}
+
+function jdnToEthiopian(jdn) {
+  // Ethiopian epoch JDN = 1724220.5 (Meskerem 1, 1 EC = August 29, 8 AD Julian)
+  const r = Math.floor(jdn - 1724220.5);
+  const n = r % 1461; // 1461 = 365*4 + 1 leap cycle
+  const year = Math.floor(r / 1461) * 4 + Math.floor(n / 365);
+  const dayOfYear = n % 365;
+  const month = Math.floor(dayOfYear / 30) + 1;
+  const day = (dayOfYear % 30) + 1;
+  return { year, month, day };
+}
+
+function ethiopianToJDN(y, m, d) {
+  return 1724220.5 + 365 * y + Math.floor(y / 4) + 30 * (m - 1) + d - 1;
+}
+
+function jdnToGregorian(jdn) {
+  const j = Math.floor(jdn) + 32044;
+  const g = Math.floor(j / 146097);
+  const dg = j % 146097;
+  const c = Math.floor((Math.floor(dg / 36524) + 1) * 3 / 4);
+  const dc = dg - c * 36524;
+  const b = Math.floor(dc / 1461);
+  const db = dc % 1461;
+  const a = Math.floor((Math.floor(db / 365) + 1) * 3 / 4);
+  const da = db - a * 365;
+  const y = g * 400 + c * 100 + b * 4 + a;
+  const m = Math.floor((da * 5 + 308) / 153) - 2;
+  const d = da - Math.floor((m + 4) * 153 / 5) + 122;
+
+  const year = y - 4800 + Math.floor((m + 2) / 12);
+  const month = (m + 2) % 12 + 1;
+  const day = d + 1;
+
+  return new Date(year, month - 1, day);
+}
+
+// ─── Ethiopian Day of Week ────────────────────────────────────────────────────
+
+/**
+ * Get the Ethiopian day name index (0=Sunday) for a Gregorian Date.
+ */
+export function getEthiopianDayOfWeek(gDate) {
+  return gDate.getDay(); // Ethiopians use same 7-day week
+}
+
+// ─── Ethiopian Month Days ────────────────────────────────────────────────────
+
+/**
+ * Returns number of days in an Ethiopian month.
+ * Months 1–12 = 30 days; Month 13 (Pagume) = 5 or 6 (leap).
+ */
+export function daysInEthiopianMonth(eYear, eMonth) {
+  if (eMonth <= 12) return 30;
+  // Pagume: 6 days if (eYear + 1) % 4 === 3
+  return (eYear + 1) % 4 === 3 ? 6 : 5;
+}
+
+/**
+ * Returns true if the Ethiopian year is a leap year.
+ */
+export function isEthiopianLeapYear(eYear) {
+  return (eYear + 1) % 4 === 3;
+}
+
+// ─── Get first day of Ethiopian month ────────────────────────────────────────
+
+/**
+ * Returns the Gregorian Date object for Meskerem 1 of the given Ethiopian year.
+ */
+export function getEthiopianMonthStart(eYear, eMonth) {
+  return ethiopianToGregorian(eYear, eMonth, 1);
+}
+
+// ─── Ethiopian Holidays ───────────────────────────────────────────────────────
+// Fixed holidays are in Ethiopian calendar (month, day).
+// Movable holidays are calculated based on Ethiopian Easter (Fasika).
+
+const FIXED_HOLIDAYS = [
+  // Ethiopian New Year — Meskerem 1
+  { month: 1, day: 1, key: 'enkutatash', nameEn: 'Enkutatash (Ethiopian New Year)', nameAm: 'እንቁጣጣሽ (አዲስ ዓመት)', descEn: 'Ethiopian New Year celebration, also called the festival of flowers and St. John the Baptist.', descAm: 'የኢትዮጵያ አዲስ ዓመት፣ የፍቅር፣ የዘፈን፣ ምናልባትም ዝናብ ጉዞ ጊዜ።' },
+  // Meskel (Finding of the True Cross) — Meskerem 17
+  { month: 1, day: 17, key: 'meskel', nameEn: 'Meskel (Finding of the True Cross)', nameAm: 'መስቀል', descEn: 'Celebrating the discovery of the True Cross by Queen Helena, marked by the Demera bonfire.', descAm: 'ሕይወት ሰጪ ቅዱስ መስቀልን ያገኘችበት ቀን – ደመራ በዓል።' },
+  // Gena (Ethiopian Christmas) — Tahsas 29
+  { month: 4, day: 29, key: 'gena', nameEn: 'Gena (Ethiopian Christmas)', nameAm: 'ጋና / ልደት', descEn: 'Ethiopian Orthodox Christmas, celebrated on Tahsas 29, corresponding to January 7 in the Gregorian calendar.', descAm: 'የኢትዮጵያ ኦርቶዶክስ ልደት፣ ሲና 29 (ጥር 7)' },
+  // Timkat (Ethiopian Epiphany) — Tir 11
+  { month: 5, day: 11, key: 'timkat', nameEn: 'Timkat (Ethiopian Epiphany)', nameAm: 'ጥምቀት', descEn: 'Epiphany festival celebrating the baptism of Jesus Christ in the Jordan River.', descAm: 'የጌታ ጥምቀት ድባብ ያለው ታላቅ ብሔራዊ ሃይማኖታዊ ክብረ-ዓመት።' },
+  // Adwa Victory Day — Yekatit 23
+  { month: 6, day: 23, key: 'adwa', nameEn: 'Victory of Adwa', nameAm: 'የዓድዋ ድል', descEn: 'Commemorates Ethiopia\'s historic victory over Italian colonial forces at the Battle of Adwa on March 1, 1896.', descAm: 'ዓድዋ ጦርነት (1888)—ኢጣሊያንን ያሸነፉበት ቀን—ሉዓላዊነት ለዓለም ያሳዩበት ክስተት።' },
+  // Good Friday/Ethiopian Easter offset — handled as movable
+  // Labor Day / International Workers' Day — Miazia 23
+  { month: 8, day: 23, key: 'laborday', nameEn: 'International Labour Day', nameAm: 'የሠራተኞች ቀን', descEn: 'International Workers\' Day celebrated globally on May 1st.', descAm: 'ዓለምአቀፍ የሠራተኞች ቀን (ሚያዚያ ፳፫)' },
+  // Patriots' Victory Day / Liberation Day — Miazia 27
+  { month: 8, day: 27, key: 'patriots', nameEn: 'Patriots\' Victory Day', nameAm: 'የድል ቀን', descEn: 'Celebrates the expulsion of Italian occupying forces on May 5, 1941, restoring Ethiopian independence.', descAm: 'ጥቁር ሊቅ—ኢጣሊያ ሃይሎች ከኢትዮጵያ ወጡ (1933)' },
+  // Derg Downfall / Democracy Day — Ginbot 20
+  { month: 9, day: 20, key: 'dergfall', nameEn: 'Downfall of the Derg', nameAm: 'የደርግ መውደቅ ቀን', descEn: 'Commemorates the overthrow of the Derg regime on May 28, 1991 and restoration of democratic governance.', descAm: 'የደርግ ሥርዓት ፍጻሜ (1983 ዓ.ም)' },
+  // Eid Al Fitr — movable (Islamic)
+  // Eid Al Adha — movable (Islamic)
+  // Prophet Muhammad's Birthday — movable
+];
+
+/**
+ * Calculate Ethiopian Easter (Fasika) for a given Ethiopian year.
+ * Uses the Metonic cycle adapted for the Julian calendar.
+ * Returns { month, day } in Ethiopian calendar.
+ */
+export function calculateFasika(eYear) {
+  const r = eYear % 19; // Metonic cycle remainder
+  // Fasika base is Megabit (month 7) with adjustment
+  const fasikaDayOfYear = (r * 19 + 29) % 30;
+  // Fasika falls in Miazia (month 8) typically
+  // More accurate: use Julian Easter and convert
+  // We'll use the known offset: Ethiopian Fasika = Julian Easter
+  // Julian Easter computation (Meeus algorithm for Julian)
+  const gYear = eYear + 7; // approximate Gregorian year
+  const a = gYear % 4;
+  const b = gYear % 7;
+  const c = gYear % 19;
+  const d = (19 * c + 15) % 30;
+  const e = (2 * a + 4 * b - d + 34) % 7;
+  const month = Math.floor((d + e + 114) / 31); // 3=March, 4=April
+  const day = ((d + e + 114) % 31) + 1;
+
+  // Julian date to Gregorian (add 13 days for 20th/21st century)
+  const julianDate = new Date(gYear, month - 1, day + 13);
+
+  // Convert to Ethiopian
+  return gregorianToEthiopian(julianDate);
+}
+
+/**
+ * Returns a list of all holidays for a given Ethiopian year,
+ * including movable ones calculated from Fasika.
+ */
+export function getHolidaysForYear(eYear) {
+  const fasika = calculateFasika(eYear);
+  const fasikaJDN = ethiopianToJDN(fasika.year, fasika.month, fasika.day);
+
+  const movable = [
+    {
+      key: 'fasika',
+      jdnOffset: 0,
+      nameEn: 'Fasika (Ethiopian Easter)',
+      nameAm: 'ፋሲካ',
+      descEn: 'Ethiopian Orthodox Easter — the most significant religious celebration.',
+      descAm: 'የኢትዮጵያ ኦርቶዶክስ ትንሳኤ ፋሲካ'
+    },
+    {
+      key: 'seklet',
+      jdnOffset: -2,
+      nameEn: 'Seklet (Good Friday)',
+      nameAm: 'ስቅለት',
+      descEn: 'Good Friday — commemorating the crucifixion of Jesus Christ.',
+      descAm: 'የጌታ ስቅለት ዕለት'
+    },
+    {
+      key: 'hosanna',
+      jdnOffset: -7,
+      nameEn: 'Hosanna (Palm Sunday)',
+      nameAm: 'ሆሳዕና',
+      descEn: 'Palm Sunday — commemorating Jesus\'s triumphal entry into Jerusalem.',
+      descAm: 'ሆሳዕና — ጌታ ወደ ኢየሩሳሌም ሲገቡ ያከበሩት ዕለት'
+    },
+  ];
+
+  const holidays = [...FIXED_HOLIDAYS.map(h => ({ ...h, eYear, movable: false }))];
+
+  for (const mv of movable) {
+    const mvJDN = fasikaJDN + mv.jdnOffset;
+    const et = jdnToEthiopian(mvJDN);
+    holidays.push({ ...mv, month: et.month, day: et.day, eYear, movable: true });
+  }
+
+  return holidays;
+}
+
+/**
+ * Find a holiday on a specific Ethiopian date, if any.
+ */
+export function getHolidayOnDate(eYear, eMonth, eDay) {
+  const holidays = getHolidaysForYear(eYear);
+  return holidays.find(h => h.month === eMonth && h.day === eDay) || null;
+}
+
+/**
+ * Get upcoming holidays from today (Gregorian) within the next N days.
+ */
+export function getUpcomingHolidays(gDate, count = 5) {
+  const today = gregorianToEthiopian(gDate);
+  const holidays = getHolidaysForYear(today.year);
+  const nextYear = getHolidaysForYear(today.year + 1);
+
+  const allHolidays = [...holidays, ...nextYear].map(h => {
+    const gDate = ethiopianToGregorian(h.eYear || today.year, h.month, h.day);
+    return { ...h, gDate };
+  });
+
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  return allHolidays
+    .filter(h => h.gDate >= now)
+    .sort((a, b) => a.gDate - b.gDate)
+    .slice(0, count);
+}
+
+// ─── Formatting Helpers ──────────────────────────────────────────────────────
+
+export function formatEthiopianDate(eYear, eMonth, eDay, lang = 'en') {
+  const months = lang === 'am' ? ET_MONTHS_AM : ET_MONTHS_EN;
+  return `${months[eMonth - 1]} ${eDay}, ${eYear}`;
+}
+
+export function formatGregorianDate(gDate, lang = 'en') {
+  return gDate.toLocaleDateString(lang === 'am' ? 'am-ET' : 'en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+}
+
+/**
+ * Get day name for a Gregorian Date in Ethiopian day names.
+ */
+export function getEthDayName(gDate, lang = 'en') {
+  const dow = gDate.getDay(); // 0=Sun
+  return lang === 'am' ? ET_DAYS_AM[dow] : ET_DAYS_EN[dow];
+}
+
+/**
+ * Get all days in a given Ethiopian month as an array of
+ * { eYear, eMonth, eDay, gDate, dayOfWeek } objects.
+ */
+export function getEthiopianMonthDays(eYear, eMonth) {
+  const totalDays = daysInEthiopianMonth(eYear, eMonth);
+  const days = [];
+  for (let d = 1; d <= totalDays; d++) {
+    const gDate = ethiopianToGregorian(eYear, eMonth, d);
+    days.push({ eYear, eMonth, eDay: d, gDate, dayOfWeek: gDate.getDay() });
+  }
+  return days;
+}
+
+/**
+ * Given a Gregorian Date, returns its Ethiopian calendar page info:
+ * which eYear, eMonth so we can show the correct calendar page.
+ */
+export function getCurrentEthiopianPage(gDate) {
+  const et = gregorianToEthiopian(gDate);
+  return { eYear: et.year, eMonth: et.month };
+}
