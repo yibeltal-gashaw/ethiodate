@@ -1,3 +1,5 @@
+import { useNavigate, useLocation } from 'react-router-dom';
+
 const NAV_LINKS = {
   en: ['Converter', 'Calendar', 'Holidays'],
   am: ['ቀን ቀያሪ', 'ቀን መቁጠሪያ', 'በዓላት'],
@@ -5,6 +7,26 @@ const NAV_LINKS = {
 
 export default function Navbar({ lang, setLang, darkMode, setDarkMode, activeTab, setActiveTab }) {
   const links = NAV_LINKS[lang];
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // On sub-routes (e.g. /holidays/:key), nav tabs navigate home with a hash
+  const isDetailPage = location.pathname !== '/';
+
+  const handleTabClick = (id) => {
+    if (isDetailPage) {
+      navigate('/');
+      // Small delay to let the main shell mount before setting tab
+      setTimeout(() => setActiveTab(id), 50);
+    } else {
+      setActiveTab(id);
+    }
+  };
+
+  const handleLogoClick = () => {
+    if (isDetailPage) navigate('/');
+    else setActiveTab('today');
+  };
 
   return (
     <header
@@ -17,7 +39,7 @@ export default function Navbar({ lang, setLang, darkMode, setDarkMode, activeTab
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
         {/* Logo */}
         <button
-          onClick={() => setActiveTab('today')}
+          onClick={handleLogoClick}
           className="flex items-center gap-2 group"
           aria-label="EthioDate Home"
         >
@@ -34,10 +56,10 @@ export default function Navbar({ lang, setLang, darkMode, setDarkMode, activeTab
           {[['converter', links[0]], ['calendar', links[1]], ['holidays', links[2]]].map(([id, label]) => (
             <button
               key={id}
-              onClick={() => setActiveTab(id)}
+              onClick={() => handleTabClick(id)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === id
-                  ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                !isDetailPage && activeTab === id
+                  ? 'bg-green-500/10 text-green-600'
                   : darkMode
                     ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
@@ -80,29 +102,29 @@ export default function Navbar({ lang, setLang, darkMode, setDarkMode, activeTab
         </div>
       </div>
 
-      {/* Mobile bottom nav */}
-      <div className={`sm:hidden flex border-t ${darkMode ? 'border-gray-700/60' : 'border-gray-100'}`}>
-        {[
-          ['today', '🏠', lang === 'am' ? 'ዋና' : 'Home'],
-          ['converter', '🔄', lang === 'am' ? 'ቀያሪ' : 'Convert'],
-          ['calendar', '📅', lang === 'am' ? 'ቀን' : 'Calendar'],
-          ['holidays', '🎉', lang === 'am' ? 'በዓላት' : 'Holidays'],
-        ].map(([id, icon, label]) => (
-          <button
-            key={id}
-            onClick={() => setActiveTab(id)}
-            className={`flex-1 flex flex-col items-center gap-0.5 py-2 text-xs font-medium transition-colors ${
-              activeTab === id
-                ? 'text-green-500'
-                : darkMode ? 'text-gray-500' : 'text-gray-400'
-            }`}
-            style={{ fontFamily: lang === 'am' ? "'Noto Sans Ethiopic', sans-serif" : 'inherit' }}
-          >
-            <span>{icon}</span>
-            <span>{label}</span>
-          </button>
-        ))}
-      </div>
+      {/* Mobile bottom nav — only on main shell */}
+      {!isDetailPage && (
+        <div className={`sm:hidden flex border-t ${darkMode ? 'border-gray-700/60' : 'border-gray-100'}`}>
+          {[
+            ['today', '🏠', lang === 'am' ? 'ዋና' : 'Home'],
+            ['converter', '🔄', lang === 'am' ? 'ቀያሪ' : 'Convert'],
+            ['calendar', '📅', lang === 'am' ? 'ቀን' : 'Calendar'],
+            ['holidays', '🎉', lang === 'am' ? 'በዓላት' : 'Holidays'],
+          ].map(([id, icon, label]) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={`flex-1 flex flex-col items-center gap-0.5 py-2 text-xs font-medium transition-colors ${
+                activeTab === id ? 'text-green-500' : darkMode ? 'text-gray-500' : 'text-gray-400'
+              }`}
+              style={{ fontFamily: lang === 'am' ? "'Noto Sans Ethiopic', sans-serif" : 'inherit' }}
+            >
+              <span>{icon}</span>
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </header>
   );
 }
