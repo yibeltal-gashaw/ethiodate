@@ -357,12 +357,14 @@ export default function HolidaysPage({ lang, darkMode }) {
   const filtered = useMemo(() => {
     return holidays.filter(h => {
       const meta = HOLIDAY_META[h.key] || {};
-      const name = lang === 'am' ? h.nameAm : h.nameEn;
-      const matchSearch = !search || name.toLowerCase().includes(search.toLowerCase());
+      const term = search.toLowerCase();
+      const matchSearch = !search || 
+        (h.nameEn && h.nameEn.toLowerCase().includes(term)) || 
+        (h.nameAm && h.nameAm.toLowerCase().includes(term));
       const matchFilter = filter === 'all' || meta.category === filter;
       return matchSearch && matchFilter;
     });
-  }, [holidays, search, filter, lang]);
+  }, [holidays, search, filter]);
 
   // Group into render rows: featured cards full-width, others in 2-col grid pairs
   const renderRows = useMemo(() => {
