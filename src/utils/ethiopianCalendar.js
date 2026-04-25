@@ -55,47 +55,41 @@ export function ethiopianToGregorian(eYear, eMonth, eDay) {
 
 // ─── JDN Helpers ─────────────────────────────────────────────────────────────
 
-function gregorianToJDN(y, m, d) {
-  return (
-    Math.floor((367 * y) - Math.floor((7 * (y + Math.floor((m + 9) / 12))) / 4) -
-    Math.floor((3 * (Math.floor((y + (m - 9) / 7) / 100) + 1)) / 4) +
-    Math.floor((275 * m) / 9) + d + 1721028.5) + 0.5
-  );
+function gregorianToJDN(year, month, day) {
+  let a = Math.floor((14 - month) / 12);
+  let y = year + 4800 - a;
+  let m = month + 12 * a - 3;
+  return day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
 }
 
 function jdnToEthiopian(jdn) {
-  // Ethiopian epoch JDN = 1724220.5 (Meskerem 1, 1 EC = August 29, 8 AD Julian)
-  const r = Math.floor(jdn - 1724220.5);
-  const n = r % 1461; // 1461 = 365*4 + 1 leap cycle
-  const year = Math.floor(r / 1461) * 4 + Math.floor(n / 365);
-  const dayOfYear = n % 365;
-  const month = Math.floor(dayOfYear / 30) + 1;
-  const day = (dayOfYear % 30) + 1;
+  let r = jdn - 1723856;
+  let n = r % 1461;
+  let year = Math.floor(r / 1461) * 4 + Math.floor(n / 365);
+  let dayOfYear = n % 365;
+  if (n === 1460) {
+    year -= 1;
+    dayOfYear = 365;
+  }
+  let month = Math.floor(dayOfYear / 30) + 1;
+  let day = (dayOfYear % 30) + 1;
   return { year, month, day };
 }
 
-function ethiopianToJDN(y, m, d) {
-  return 1724220.5 + 365 * y + Math.floor(y / 4) + 30 * (m - 1) + d - 1;
+function ethiopianToJDN(year, month, day) {
+  return 1723856 + 365 * year + Math.floor(year / 4) + 30 * (month - 1) + day - 1;
 }
 
 function jdnToGregorian(jdn) {
-  const j = Math.floor(jdn) + 32044;
-  const g = Math.floor(j / 146097);
-  const dg = j % 146097;
-  const c = Math.floor((Math.floor(dg / 36524) + 1) * 3 / 4);
-  const dc = dg - c * 36524;
-  const b = Math.floor(dc / 1461);
-  const db = dc % 1461;
-  const a = Math.floor((Math.floor(db / 365) + 1) * 3 / 4);
-  const da = db - a * 365;
-  const y = g * 400 + c * 100 + b * 4 + a;
-  const m = Math.floor((da * 5 + 308) / 153) - 2;
-  const d = da - Math.floor((m + 4) * 153 / 5) + 122;
-
-  const year = y - 4800 + Math.floor((m + 2) / 12);
-  const month = (m + 2) % 12 + 1;
-  const day = d + 1;
-
+  let a = jdn + 32044;
+  let b = Math.floor((4 * a + 3) / 146097);
+  let c = a - Math.floor((146097 * b) / 4);
+  let d = Math.floor((4 * c + 3) / 1461);
+  let e = c - Math.floor((1461 * d) / 4);
+  let m = Math.floor((5 * e + 2) / 153);
+  let day = e - Math.floor((153 * m + 2) / 5) + 1;
+  let month = m + 3 - 12 * Math.floor(m / 10);
+  let year = b * 100 + d - 4800 + Math.floor(m / 10);
   return new Date(year, month - 1, day);
 }
 

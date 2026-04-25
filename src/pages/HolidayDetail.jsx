@@ -108,17 +108,23 @@ export default function HolidayDetail() {
   const bodyText = darkMode ? 'text-gray-300' : 'text-gray-600';
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${bg}`}
+    <div className={`min-h-screen relative overflow-hidden transition-colors duration-300 ${bg}`}
       style={{ fontFamily: lang === 'am' ? "'Noto Sans Ethiopic','Inter',sans-serif" : "'Inter',sans-serif" }}
     >
-      <Navbar
-        lang={lang} setLang={setLang}
-        darkMode={darkMode} setDarkMode={setDarkMode}
-        activeTab={null}
-        setActiveTab={() => {}}
-      />
+      {/* Animated Glass Bubbles Background */}
+      <div className="glass-bubble glass-bubble-1"></div>
+      <div className="glass-bubble glass-bubble-2"></div>
+      <div className="glass-bubble glass-bubble-3"></div>
 
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 pb-16 animate-fadeIn">
+      <div className="glass-container">
+        <Navbar
+          lang={lang} setLang={setLang}
+          darkMode={darkMode} setDarkMode={setDarkMode}
+          activeTab={null}
+          setActiveTab={() => {}}
+        />
+
+        <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 pb-16 animate-fadeIn relative">
 
         {/* Back link */}
         <button
@@ -240,6 +246,7 @@ export default function HolidayDetail() {
           </>
         )}
       </main>
+      </div>
     </div>
   );
 }

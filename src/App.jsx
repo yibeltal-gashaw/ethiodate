@@ -1,127 +1,114 @@
 import { Routes, Route } from 'react-router-dom';
 import { useState } from 'react';
 import { useApp } from './context/AppContext';
-import Navbar from './components/Navbar';
-import TodayWidget from './components/TodayWidget';
+import Sidebar from './components/Sidebar';
+import TopBar from './components/TopBar';
+import HomePage from './pages/HomePage';
 import DateConverter from './components/DateConverter';
 import CalendarView from './components/CalendarView';
+import ConverterPage from './pages/ConverterPage';
 import HolidayPanel from './components/HolidayPanel';
+import HolidaysPage from './pages/HolidaysPage';
 import HolidayDetail from './pages/HolidayDetail';
 
-// ── Main shell (all tabs live here at "/") ──────────────────────────────────
+// ── Main shell ───────────────────────────────────────────────────────────────
 function MainShell() {
   const { lang, setLang, darkMode, setDarkMode } = useApp();
   const [activeTab, setActiveTab] = useState('today');
   const sharedProps = { lang, darkMode };
 
+  const bg          = darkMode ? '#0f172a' : '#f9fafb';
+  const cardBg      = darkMode ? '#1e293b' : '#ffffff';
+  const border      = darkMode ? '#1e293b' : '#f0f0f0';
+  const textPrimary = darkMode ? '#f1f5f9' : '#111827';
+  const textMuted   = darkMode ? '#94a3b8' : '#6b7280';
+
   return (
     <div
-      className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900 text-white' : 'bg-slate-50 text-gray-900'}`}
-      style={{ fontFamily: lang === 'am' ? "'Noto Sans Ethiopic','Inter',sans-serif" : "'Inter',sans-serif" }}
+      className="app-shell"
+      style={{
+        fontFamily: lang === 'am'
+          ? "'Noto Sans Ethiopic','Inter',sans-serif"
+          : "'Inter',sans-serif",
+      }}
     >
-      <Navbar
-        lang={lang} setLang={setLang}
-        darkMode={darkMode} setDarkMode={setDarkMode}
-        activeTab={activeTab} setActiveTab={setActiveTab}
+      {/* Left sidebar */}
+      <Sidebar
+        lang={lang}
+        darkMode={darkMode}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
       />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-24 sm:pb-10">
+      {/* Right column: top bar + page content */}
+      <div className="app-main">
+        <TopBar
+          lang={lang} setLang={setLang}
+          darkMode={darkMode} setDarkMode={setDarkMode}
+        />
 
-        {/* ── TODAY ──────────────────────────────────────────────────── */}
-        {activeTab === 'today' && (
-          <div className="space-y-6 animate-fadeIn">
-            <div className="text-center py-4">
-              <h1 className={`text-3xl sm:text-4xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {lang === 'am'
-                  ? <>ዛሬ ምን ቀን ነው? <span className="text-green-500">🇪🇹</span></>
-                  : <>Ethiopian <span className="text-green-500">Date</span> &amp; Calendar</>}
-              </h1>
-              <p className={`mt-2 text-sm sm:text-base ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {lang === 'am'
-                  ? 'ቀን ቀይሩ፣ ቀን ይቁጠሩ፣ በዓላትን ይወቁ'
-                  : 'Convert dates, explore the Ethiopian calendar, and discover holidays'}
-              </p>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              <TodayWidget {...sharedProps} />
-              <DateConverter {...sharedProps} />
-            </div>
-            <HolidayPanel {...sharedProps} />
-          </div>
-        )}
+        {/* ── Page views ── */}
+        <div className="page-area" style={{ background: bg }}>
 
-        {/* ── CONVERTER ──────────────────────────────────────────────── */}
-        {activeTab === 'converter' && (
-          <div className="max-w-xl mx-auto animate-fadeIn">
-            <div className="text-center py-4 mb-4">
-              <h1 className={`text-2xl sm:text-3xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {lang === 'am' ? 'ቀን ቀያሪ' : 'Date Converter'}
-              </h1>
-              <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {lang === 'am' ? 'ጎርጎሮሲያን ↔ ኢትዮጵያ ቀን' : 'Gregorian ↔ Ethiopian calendar'}
-              </p>
+          {/* TODAY — full dashboard */}
+          {activeTab === 'today' && (
+            <div className="animate-fadeIn">
+              <HomePage lang={lang} darkMode={darkMode} setActiveTab={setActiveTab} />
             </div>
-            <DateConverter {...sharedProps} />
-            <div className={`mt-5 rounded-xl p-4 text-sm ${
-              darkMode ? 'bg-gray-800/50 border border-gray-700/50 text-gray-300' : 'bg-blue-50 border border-blue-100 text-blue-700'
-            }`}>
-              <p className="font-medium mb-1">
-                {lang === 'am' ? '💡 ስለ ቀን አቆጣጠሩ' : '💡 About the Ethiopian Calendar'}
-              </p>
-              <p className={darkMode ? 'text-gray-400' : 'text-blue-600'}>
-                {lang === 'am'
-                  ? 'የኢትዮጵያ ቀን አቆጣጠር ከጎርጎሮሲያን ቀን አቆጣጠር 7–8 ዓመት ወደ ኋላ ይቀራል። 12 ወር ሲኖሩት እያንዳንዳቸው 30 ቀናት አሏቸው፣ 13ኛው ወር ፓጉሜ ደግሞ 5 ወይም 6 ቀናት ይኖሩታል።'
-                  : 'The Ethiopian calendar is 7–8 years behind the Gregorian calendar. It has 12 months of 30 days each, plus a 13th month called Pagume with 5 or 6 days.'}
-              </p>
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* ── CALENDAR ───────────────────────────────────────────────── */}
-        {activeTab === 'calendar' && (
-          <div className="max-w-lg mx-auto animate-fadeIn">
-            <div className="text-center py-4 mb-4">
-              <h1 className={`text-2xl sm:text-3xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {lang === 'am' ? 'ቀን መቁጠሪያ' : 'Calendar'}
-              </h1>
-              <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {lang === 'am' ? 'ኢትዮጵያ ወይም ጎርጎሮሲያን ቀን ይምረጡ' : 'Switch between Ethiopian and Gregorian views'}
-              </p>
+          {/* CONVERTER */}
+          {activeTab === 'converter' && (
+            <div className="animate-fadeIn">
+              <ConverterPage lang={lang} darkMode={darkMode} />
             </div>
-            <CalendarView {...sharedProps} />
-          </div>
-        )}
+          )}
 
-        {/* ── HOLIDAYS ───────────────────────────────────────────────── */}
-        {activeTab === 'holidays' && (
-          <div className="max-w-3xl mx-auto animate-fadeIn">
-            <div className="text-center py-4 mb-4">
-              <h1 className={`text-2xl sm:text-3xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {lang === 'am' ? 'የኢትዮጵያ በዓላት' : 'Ethiopian Holidays'}
-              </h1>
-              <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {lang === 'am' ? 'ቀጣይ ብሔራዊ እና ሃይማኖታዊ በዓላት' : 'National and religious holidays — tap a card for details'}
-              </p>
+          {/* CALENDAR */}
+          {activeTab === 'calendar' && (
+            <div className="page-inner animate-fadeIn" style={{ maxWidth: 560 }}>
+              <div className="page-heading">
+                <h1 style={{ color: textPrimary, fontSize: 24, fontWeight: 700, margin: 0 }}>
+                  {lang === 'am' ? 'ቀን መቁጠሪያ' : 'Calendar'}
+                </h1>
+                <p style={{ color: textMuted, fontSize: 14, marginTop: 4 }}>
+                  {lang === 'am' ? 'ኢትዮጵያ ወይም ጎርጎሮሲያን ቀን ይምረጡ' : 'Switch between Ethiopian and Gregorian views'}
+                </p>
+              </div>
+              <CalendarView {...sharedProps} />
             </div>
-            <HolidayPanel {...sharedProps} />
-          </div>
-        )}
-      </main>
+          )}
 
-      <footer className={`text-center py-4 text-xs border-t hidden sm:block transition-colors duration-300 ${
-        darkMode ? 'text-gray-600 border-gray-800' : 'text-gray-400 border-gray-100'
-      }`}>
-        EthioDate &mdash; {lang === 'am' ? 'ቀን ቀያሪ' : 'Ethiopian Calendar Converter'} &mdash; {new Date().getFullYear()}
-      </footer>
+          {/* HOLIDAYS */}
+          {activeTab === 'holidays' && (
+            <div className="animate-fadeIn">
+              <HolidaysPage lang={lang} darkMode={darkMode} />
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <footer style={{
+          textAlign: 'center', padding: '12px 0', fontSize: 12,
+          color: textMuted,
+          borderTop: `1px solid ${border}`,
+          background: darkMode ? '#111827' : '#fff',
+        }}>
+          EthioDate &mdash; {lang === 'am' ? 'ቀን ቀያሪ' : 'Ethiopian Calendar Converter'} &mdash; {new Date().getFullYear()}
+        </footer>
+      </div>
     </div>
   );
 }
 
-// ── Root with routing ───────────────────────────────────────────────────────
+// ── Mobile bottom nav overlay (small screens) ────────────────────────────────
+// (Handled inside MainShell via CSS)
+
+// ── Root with routing ─────────────────────────────────────────────────────────
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<MainShell />} />
+      <Route path="/"              element={<MainShell />} />
       <Route path="/holidays/:key" element={<HolidayDetail />} />
     </Routes>
   );
