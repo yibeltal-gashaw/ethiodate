@@ -8,125 +8,12 @@ import {
   ET_MONTHS_EN,
   ET_MONTHS_AM,
 } from '../utils/ethiopianCalendar';
+import { HOLIDAY_META, GRADIENT_FALLBACKS, TAG_STYLES } from '../data/holidaysData';
 
 // ── Holiday metadata ──────────────────────────────────────────────────────────
-const HOLIDAY_META = {
-  enkutatash: {
-    image: '/holidays/enkutatash.png',
-    tags: ['NATIONAL', 'CULTURAL'],
-    featured: false,
-    category: 'national',
-    descEn: 'The Ethiopian New Year. It marks the end of the rainy season and the blooming of the yellow Adey Abeba flowers across the highlands.',
-    descAm: 'የኢትዮጵያ አዲስ ዓመት። የዝናብ ወቅት መጨረሻ እና ቢጫ አደይ አበባዎች ከፍታ ቦታዎች ላይ ሲያብቡ የሚከበር ክብረ ዓመት ነው።',
-  },
-  meskel: {
-    image: '/holidays/meskel.png',
-    tags: ['RELIGIOUS', 'UNESCO'],
-    featured: false,
-    category: 'religious',
-    descEn: 'Finding of the True Cross. Celebrated with the burning of a large bonfire called "Demera" and traditional dances.',
-    descAm: 'ሕይወት ሰጪ ቅዱስ መስቀልን ማግኘት። "ደመራ" ተብሎ የሚጠራ ትልቅ ዕሳት በማቃጠልና በባህላዊ ዘፈን ይከበራል።',
-  },
-  gena: {
-    image: '/holidays/genna.png',
-    tags: ['RELIGIOUS', 'LALIBELA'],
-    featured: false,
-    category: 'religious',
-    descEn: 'Ethiopian Christmas. Celebrated after a 43-day fast. Many travel to Lalibela for spectacular ceremonies at the rock-hewn churches.',
-    descAm: 'የኢትዮጵያ ልደት። ከ43 ቀናት ጾም በኋላ ይከበራል። ብዙዎች ወደ ላሊበላ ጎጆ ቤተ ክርስቲያናት ያመራሉ።',
-  },
-  timkat: {
-    image: '/holidays/timkat.png',
-    tags: ['RELIGIOUS', 'UNESCO'],
-    featured: false,
-    category: 'religious',
-    descEn: 'Epiphany celebration. Commemorates the baptism of Jesus in the Jordan River. Famous for processions carrying "Tabots" to water bodies.',
-    descAm: 'የጌታ ጥምቀት ክብረ ዓመት። "ጣቦቶችን" ወደ ወንዝ እና ሀይቅ ቦታዎች ሰልፍ ለማካሄድ ይታወቃል።',
-  },
-  adwa: {
-    image: '/holidays/adwa.png',
-    tags: ['NATIONAL', 'HISTORIC'],
-    featured: false,
-    category: 'national',
-    descEn: "Ethiopia's historic victory over Italian colonial forces at the Battle of Adwa on March 1, 1896 — a symbol of African sovereignty.",
-    descAm: 'ኢትዮጵያ ከጣሊያን ቅኝ ገዥ ሃይሎች ላይ ያደረገችው ታሪካዊ ድል — የአፍሪካ ሉዓላዊነት ምልክት።',
-  },
-  laborday: {
-    image: null,
-    tags: ['NATIONAL', 'PUBLIC HOLIDAY'],
-    featured: false,
-    category: 'national',
-    descEn: "International Workers' Day, celebrated globally on May 1st.",
-    descAm: 'ዓለምአቀፍ የሠራተኞች ቀን (ሚያዚያ ፳፫)',
-  },
-  patriots: {
-    image: null,
-    tags: ['NATIONAL', 'HISTORIC'],
-    featured: false,
-    category: 'national',
-    descEn: "Celebrates Ethiopia's liberation from Italian occupation on May 5, 1941.",
-    descAm: 'ሜይ 5, 1941 ኢትዮጵያ ከጣሊያን ቅኝ ግዛት ነፃ የወጣችበትን ቀን ያከብራል።',
-  },
-  dergfall: {
-    image: null,
-    tags: ['NATIONAL', 'PUBLIC HOLIDAY'],
-    featured: false,
-    category: 'national',
-    descEn: 'Commemorates the overthrow of the Derg regime on May 28, 1991 and restoration of democratic governance.',
-    descAm: 'ግንቦት 20 ቀን 1983 ዓ.ም የደርግ ሥርዓት ፍጻሜን ያስታውሳል።',
-  },
-  fasika: {
-    image: '/holidays/fasika.png',
-    tags: ['RELIGIOUS', 'MAJOR EVENT'],
-    featured: true,
-    category: 'religious',
-    descEn: 'Ethiopian Easter. Preceded by an intense 55-day fast, this is the most important religious holiday in the Ethiopian Orthodox Tewahedo Church, characterized by midnight masses and grand family feasts.',
-    descAm: 'ኢትዮጵያ ፋሲካ። ጥልቅ የ55 ቀናት ጾም ተቀድሞ፣ ይህ በኢትዮጵያ ኦርቶዶክስ ተዋሕዶ ቤተ ክርስቲያን ውስጥ ዋናው ሃይማኖታዊ ክብረ-ዓመት ሲሆን፣ በምሽት ቅዳሴ እና ትልቅ የቤተሰብ ድግስ ይታወቃል።',
-  },
-  seklet: {
-    image: null,
-    tags: ['RELIGIOUS'],
-    featured: false,
-    category: 'religious',
-    descEn: 'Good Friday — commemorating the crucifixion of Jesus Christ.',
-    descAm: 'ስቅለት — የጌታ ስቅለት ዕለት',
-  },
-  hosanna: {
-    image: null,
-    tags: ['RELIGIOUS'],
-    featured: false,
-    category: 'religious',
-    descEn: "Palm Sunday — commemorating Jesus's triumphal entry into Jerusalem.",
-    descAm: 'ሆሳዕና — ጌታ ወደ ኢየሩሳሌም ሲገቡ ያከበሩት ዕለት',
-  },
-};
 
-const GRADIENT_FALLBACKS = {
-  enkutatash: 'linear-gradient(135deg, #84cc16, #22c55e)',
-  meskel:     'linear-gradient(135deg, #f97316, #ef4444)',
-  gena:       'linear-gradient(135deg, #6366f1, #8b5cf6)',
-  timkat:     'linear-gradient(135deg, #3b82f6, #06b6d4)',
-  adwa:       'linear-gradient(135deg, #f59e0b, #ef4444)',
-  laborday:   'linear-gradient(135deg, #14b8a6, #3b82f6)',
-  patriots:   'linear-gradient(135deg, #f59e0b, #84cc16)',
-  dergfall:   'linear-gradient(135deg, #8b5cf6, #3b82f6)',
-  fasika:     'linear-gradient(135deg, #f97316, #f59e0b)',
-  seklet:     'linear-gradient(135deg, #6b7280, #374151)',
-  hosanna:    'linear-gradient(135deg, #84cc16, #22c55e)',
-};
 
-const TAG_STYLES = {
-  'RELIGIOUS':     { bg: '#dcfce7', color: '#16a34a' },
-  'NATIONAL':      { bg: '#dbeafe', color: '#1d4ed8' },
-  'CULTURAL':      { bg: '#fef9c3', color: '#a16207' },
-  'UNESCO':        { bg: '#f3e8ff', color: '#7c3aed' },
-  'LALIBELA':      { bg: '#fee2e2', color: '#b91c1c' },
-  'HISTORIC':      { bg: '#ffedd5', color: '#c2410c' },
-  'MAJOR EVENT':   { bg: '#f0fdf4', color: '#15803d', border: '1px solid #22c55e' },
-  'PUBLIC HOLIDAY':{ bg: '#eff6ff', color: '#1d4ed8' },
-};
-
-function TagBadge({ tag }) {
+export function TagBadge({ tag }) {
   const s = TAG_STYLES[tag] || { bg: '#f3f4f6', color: '#374151' };
   return (
     <span style={{

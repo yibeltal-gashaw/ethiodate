@@ -5,6 +5,8 @@
  */
 
 // ─── Ethiopian Calendar Epoch ────────────────────────────────────────────────
+import { FIXED_HOLIDAYS } from '../data/holidaysData';
+
 // Ethiopian calendar is ~7–8 years behind Gregorian (Julian offset)
 // Ethiopian year starts on Meskerem 1 = Sept 11 (or Sept 12 in Gregorian leap year eve)
 
@@ -133,29 +135,6 @@ export function getEthiopianMonthStart(eYear, eMonth) {
 // ─── Ethiopian Holidays ───────────────────────────────────────────────────────
 // Fixed holidays are in Ethiopian calendar (month, day).
 // Movable holidays are calculated based on Ethiopian Easter (Fasika).
-
-const FIXED_HOLIDAYS = [
-  // Ethiopian New Year — Meskerem 1
-  { month: 1, day: 1, key: 'enkutatash', nameEn: 'Enkutatash (Ethiopian New Year)', nameAm: 'እንቁጣጣሽ (አዲስ ዓመት)', descEn: 'Ethiopian New Year celebration, also called the festival of flowers and St. John the Baptist.', descAm: 'የኢትዮጵያ አዲስ ዓመት፣ የፍቅር፣ የዘፈን፣ ምናልባትም ዝናብ ጉዞ ጊዜ።' },
-  // Meskel (Finding of the True Cross) — Meskerem 17
-  { month: 1, day: 17, key: 'meskel', nameEn: 'Meskel (Finding of the True Cross)', nameAm: 'መስቀል', descEn: 'Celebrating the discovery of the True Cross by Queen Helena, marked by the Demera bonfire.', descAm: 'ሕይወት ሰጪ ቅዱስ መስቀልን ያገኘችበት ቀን – ደመራ በዓል።' },
-  // Gena (Ethiopian Christmas) — Tahsas 29
-  { month: 4, day: 29, key: 'gena', nameEn: 'Gena (Ethiopian Christmas)', nameAm: 'ጋና / ልደት', descEn: 'Ethiopian Orthodox Christmas, celebrated on Tahsas 29, corresponding to January 7 in the Gregorian calendar.', descAm: 'የኢትዮጵያ ኦርቶዶክስ ልደት፣ ሲና 29 (ጥር 7)' },
-  // Timkat (Ethiopian Epiphany) — Tir 11
-  { month: 5, day: 11, key: 'timkat', nameEn: 'Timkat (Ethiopian Epiphany)', nameAm: 'ጥምቀት', descEn: 'Epiphany festival celebrating the baptism of Jesus Christ in the Jordan River.', descAm: 'የጌታ ጥምቀት ድባብ ያለው ታላቅ ብሔራዊ ሃይማኖታዊ ክብረ-ዓመት።' },
-  // Adwa Victory Day — Yekatit 23
-  { month: 6, day: 23, key: 'adwa', nameEn: 'Victory of Adwa', nameAm: 'የዓድዋ ድል', descEn: 'Commemorates Ethiopia\'s historic victory over Italian colonial forces at the Battle of Adwa on March 1, 1896.', descAm: 'ዓድዋ ጦርነት (1888)—ኢጣሊያንን ያሸነፉበት ቀን—ሉዓላዊነት ለዓለም ያሳዩበት ክስተት።' },
-  // Good Friday/Ethiopian Easter offset — handled as movable
-  // Labor Day / International Workers' Day — Miazia 23
-  { month: 8, day: 23, key: 'laborday', nameEn: 'International Labour Day', nameAm: 'የሠራተኞች ቀን', descEn: 'International Workers\' Day celebrated globally on May 1st.', descAm: 'ዓለምአቀፍ የሠራተኞች ቀን (ሚያዚያ ፳፫)' },
-  // Patriots' Victory Day / Liberation Day — Miazia 27
-  { month: 8, day: 27, key: 'patriots', nameEn: 'Patriots\' Victory Day', nameAm: 'የድል ቀን', descEn: 'Celebrates the expulsion of Italian occupying forces on May 5, 1941, restoring Ethiopian independence.', descAm: 'ጥቁር ሊቅ—ኢጣሊያ ሃይሎች ከኢትዮጵያ ወጡ (1933)' },
-  // Derg Downfall / Democracy Day — Ginbot 20
-  { month: 9, day: 20, key: 'dergfall', nameEn: 'Downfall of the Derg', nameAm: 'የደርግ መውደቅ ቀን', descEn: 'Commemorates the overthrow of the Derg regime on May 28, 1991 and restoration of democratic governance.', descAm: 'የደርግ ሥርዓት ፍጻሜ (1983 ዓ.ም)' },
-  // Eid Al Fitr — movable (Islamic)
-  // Eid Al Adha — movable (Islamic)
-  // Prophet Muhammad's Birthday — movable
-];
 
 /**
  * Calculate Ethiopian Easter (Fasika) for a given Ethiopian year.

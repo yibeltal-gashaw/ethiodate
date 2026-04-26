@@ -1,7 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import Navbar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
+import TopBar from '../components/TopBar';
 import {
   getHolidaysForYear,
   gregorianToEthiopian,
@@ -9,243 +10,199 @@ import {
   ET_MONTHS_EN,
   ET_MONTHS_AM,
 } from '../utils/ethiopianCalendar';
-
-const HOLIDAY_ICONS = {
-  enkutatash: '🌸', meskel: '✝️', gena: '⭐', timkat: '💧',
-  adwa: '🦁', laborday: '⚒️', patriots: '🏆', dergfall: '🕊️',
-  fasika: '🐣', seklet: '🙏', hosanna: '🌿',
-};
-
-const GRADIENTS = [
-  'from-green-500 to-emerald-600',
-  'from-yellow-400 to-orange-500',
-  'from-red-500 to-rose-600',
-  'from-blue-500 to-indigo-600',
-  'from-purple-500 to-violet-600',
-  'from-teal-500 to-cyan-600',
-];
-
-const ALL_KEYS_ORDER = [
-  'enkutatash','meskel','gena','timkat','adwa',
-  'laborday','patriots','dergfall','hosanna','seklet','fasika',
-];
-
-const LABELS = {
-  en: {
-    back: '← Back to Holidays',
-    ethDate: 'Ethiopian Date',
-    gregDate: 'Gregorian Date',
-    type: 'Holiday Type',
-    fixed: 'Fixed Holiday',
-    movable: 'Movable Holiday',
-    about: 'About this Holiday',
-    daysAway: 'days away',
-    today: 'Today! 🎉',
-    tomorrow: 'Tomorrow',
-    notFound: 'Holiday not found.',
-    goBack: 'Go Back',
-  },
-  am: {
-    back: '← ወደ በዓላት ተመለስ',
-    ethDate: 'የኢትዮጵያ ቀን',
-    gregDate: 'ጎርጎሮሲያን ቀን',
-    type: 'የበዓሉ ዓይነት',
-    fixed: 'ቋሚ በዓል',
-    movable: 'ተንቀሳቃሽ በዓል',
-    about: 'ስለ ዚህ በዓል',
-    daysAway: 'ቀናት ይቀሩታል',
-    today: 'ዛሬ! 🎉',
-    tomorrow: 'ነገ',
-    notFound: 'በዓሉ አልተገኘም።',
-    goBack: 'ተመለስ',
-  },
-};
-
+import { TagBadge } from './HolidaysPage';
+import { HOLIDAY_META, GRADIENT_FALLBACKS, DETAILED_DESCRIPTIONS } from '../data/holidaysData';
 export default function HolidayDetail() {
   const { key } = useParams();
   const navigate = useNavigate();
   const { lang, setLang, darkMode, setDarkMode } = useApp();
-  const L = LABELS[lang];
 
   const [holiday, setHoliday] = useState(null);
-  const [gradient, setGradient] = useState(GRADIENTS[0]);
 
   useEffect(() => {
     const today = new Date();
     const et = gregorianToEthiopian(today);
     const all = getHolidaysForYear(et.year).map(h => {
-      const gd = ethiopianToGregorian(et.year, h.month, h.day);
+      const gd = (() => { try { return ethiopianToGregorian(et.year, h.month, h.day); } catch { return null; } })();
       return { ...h, gDate: gd, eYear: et.year };
     });
     const found = all.find(h => h.key === key);
     setHoliday(found || null);
-
-    const idx = ALL_KEYS_ORDER.indexOf(key);
-    setGradient(GRADIENTS[idx >= 0 ? idx % GRADIENTS.length : 0]);
-
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [key]);
+
+  const handleSidebarNav = (tabId) => {
+    navigate('/', { state: { tab: tabId } });
+  };
 
   const getDaysAway = (gDate) => {
     if (!gDate) return null;
     const now = new Date(); now.setHours(0,0,0,0);
     const d = new Date(gDate); d.setHours(0,0,0,0);
-    const diff = Math.round((d - now) / 86400000);
-    if (diff === 0) return { label: L.today, urgent: true };
-    if (diff === 1) return { label: L.tomorrow, urgent: false };
-    if (diff < 0) return null;
-    return { label: `${diff} ${L.daysAway}`, urgent: false };
+    return Math.round((d - now) / 86400000);
   };
 
-  const getMonthLabel = (m) => lang === 'am' ? ET_MONTHS_AM[m - 1] : ET_MONTHS_EN[m - 1];
-  const icon = HOLIDAY_ICONS[key] ?? '🎊';
+  // ── Layout styles ────────────────────────────────────────────────────────
+  const pageBg        = darkMode ? '#0f172a' : '#f9fafb';
+  const cardBg        = darkMode ? '#1e293b' : '#ffffff';
+  const border        = darkMode ? '#334155' : '#e5e7eb';
+  const textPrimary   = darkMode ? '#f1f5f9' : '#111827';
+  const textSecondary = darkMode ? '#94a3b8' : '#6b7280';
 
-  const bg = darkMode ? 'bg-gray-900' : 'bg-slate-50';
-  const cardBg = darkMode ? 'bg-gray-800 border-gray-700/50' : 'bg-white border-gray-200/60';
-  const sectionBg = darkMode ? 'bg-gray-800/60' : 'bg-gray-50';
-  const mutedText = darkMode ? 'text-gray-400' : 'text-gray-500';
-  const headingText = darkMode ? 'text-white' : 'text-gray-900';
-  const bodyText = darkMode ? 'text-gray-300' : 'text-gray-600';
-
-  return (
-    <div className={`min-h-screen relative overflow-hidden transition-colors duration-300 ${bg}`}
-      style={{ fontFamily: lang === 'am' ? "'Noto Sans Ethiopic','Inter',sans-serif" : "'Inter',sans-serif" }}
-    >
-      {/* Animated Glass Bubbles Background */}
-      <div className="glass-bubble glass-bubble-1"></div>
-      <div className="glass-bubble glass-bubble-2"></div>
-      <div className="glass-bubble glass-bubble-3"></div>
-
-      <div className="glass-container">
-        <Navbar
-          lang={lang} setLang={setLang}
-          darkMode={darkMode} setDarkMode={setDarkMode}
-          activeTab={null}
-          setActiveTab={() => {}}
-        />
-
-        <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 pb-16 animate-fadeIn relative">
-
-        {/* Back link */}
-        <button
-          onClick={() => navigate(-1)}
-          className={`flex items-center gap-1.5 text-sm font-medium mb-6 transition-colors duration-150 ${
-            darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          {L.back}
-        </button>
-
-        {!holiday ? (
-          <div className={`rounded-2xl border p-10 text-center ${cardBg}`}>
-            <p className={`text-lg mb-4 ${mutedText}`}>{L.notFound}</p>
-            <button
-              onClick={() => navigate(-1)}
-              className="px-5 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition-colors"
-            >
-              {L.goBack}
-            </button>
-          </div>
-        ) : (
-          <>
-            {/* ── Hero banner ─────────────────────────────────────────── */}
-            <div className={`rounded-2xl overflow-hidden shadow-sm mb-6 bg-gradient-to-br ${gradient}`}>
-              <div className="flex flex-col items-center justify-center py-14 px-6 text-center">
-                <span className="text-7xl mb-4 drop-shadow-lg">{icon}</span>
-                <h1
-                  className="text-2xl sm:text-3xl font-bold text-white drop-shadow-sm leading-tight"
-                  style={{ fontFamily: lang === 'am' ? "'Noto Sans Ethiopic',sans-serif" : 'inherit' }}
-                >
-                  {lang === 'am' ? holiday.nameAm : holiday.nameEn}
-                </h1>
-
-                {/* Days away badge */}
-                {(() => {
-                  const d = getDaysAway(holiday.gDate);
-                  return d ? (
-                    <span className={`mt-3 inline-block text-sm font-semibold px-4 py-1 rounded-full ${
-                      d.urgent ? 'bg-white text-green-600' : 'bg-white/20 text-white'
-                    }`}>
-                      {d.label}
-                    </span>
-                  ) : null;
-                })()}
+  if (!holiday) {
+    return (
+      <div className="app-shell" style={{ fontFamily: lang === 'am' ? "'Noto Sans Ethiopic','Inter',sans-serif" : "'Inter',sans-serif", background: pageBg }}>
+        <Sidebar lang={lang} darkMode={darkMode} activeTab="holidays" setActiveTab={handleSidebarNav} />
+        <div className="app-main">
+          <TopBar lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+          <div className="page-area" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ textAlign: 'center', color: textSecondary }}>
+              Loading or Not Found...
+              <div style={{ marginTop: 16 }}>
+                <button onClick={() => navigate(-1)} style={{ padding: '8px 16px', background: '#16a34a', color: '#fff', borderRadius: 8, border: 'none', fontWeight: 600 }}>
+                  Go Back
+                </button>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-            {/* ── Date info card ───────────────────────────────────────── */}
-            <div className={`rounded-2xl border p-5 mb-5 shadow-sm ${cardBg}`}>
-              <div className="grid grid-cols-2 gap-6">
-                {/* Ethiopian date */}
-                <div>
-                  <p className={`text-[11px] font-semibold uppercase tracking-wider mb-2 ${mutedText}`}>
-                    🇪🇹 {L.ethDate}
-                  </p>
-                  <p className={`text-xl font-bold ${headingText}`}
-                    style={{ fontFamily: lang === 'am' ? "'Noto Sans Ethiopic',sans-serif" : 'inherit' }}>
-                    {holiday.day}
-                  </p>
-                  <p className={`text-sm font-medium ${bodyText}`}
-                    style={{ fontFamily: lang === 'am' ? "'Noto Sans Ethiopic',sans-serif" : 'inherit' }}>
-                    {getMonthLabel(holiday.month)} {holiday.eYear}
-                  </p>
-                  <p className={`text-xs mt-0.5 ${mutedText}`}>
-                    {lang === 'am' ? 'ዓ.ም' : 'Ethiopian Calendar'}
-                  </p>
-                </div>
+  const meta     = HOLIDAY_META[holiday.key] || {};
+  const months   = lang === 'am' ? ET_MONTHS_AM : ET_MONTHS_EN;
+  const daysAway = getDaysAway(holiday.gDate);
+  const etMonth  = months[holiday.month - 1];
 
-                {/* Gregorian date */}
-                {holiday.gDate && (
-                  <div>
-                    <p className={`text-[11px] font-semibold uppercase tracking-wider mb-2 ${mutedText}`}>
-                      🌍 {L.gregDate}
-                    </p>
-                    <p className={`text-xl font-bold ${headingText}`}>
-                      {holiday.gDate.getDate()}
-                    </p>
-                    <p className={`text-sm font-medium ${bodyText}`}>
-                      {holiday.gDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                    </p>
-                    <p className={`text-xs mt-0.5 ${mutedText}`}>
-                      Gregorian Calendar
-                    </p>
+  const gregLabel = holiday.gDate
+    ? holiday.gDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+    : null;
+
+  const detailedDesc = DETAILED_DESCRIPTIONS[holiday.key];
+  const descAm = detailedDesc?.am || meta.descAm || holiday.descAm;
+  const descEn = detailedDesc?.en || meta.descEn || holiday.descEn;
+
+  return (
+    <div className="app-shell" style={{ fontFamily: lang === 'am' ? "'Noto Sans Ethiopic','Inter',sans-serif" : "'Inter',sans-serif", background: pageBg }}>
+      <Sidebar lang={lang} darkMode={darkMode} activeTab="holidays" setActiveTab={handleSidebarNav} />
+      
+      <div className="app-main">
+        <TopBar lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+        
+        <div className="page-area" style={{ padding: '32px 32px 60px' }}>
+          <div style={{ maxWidth: 860, margin: '0 auto' }}>
+
+            {/* Back button */}
+            <button
+              onClick={() => navigate(-1)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: 'none', border: 'none', padding: 0,
+                color: textSecondary, fontSize: 14, fontWeight: 600,
+                cursor: 'pointer', marginBottom: 24, transition: 'color 0.15s'
+              }}
+              onMouseOver={e => e.currentTarget.style.color = textPrimary}
+              onMouseOut={e => e.currentTarget.style.color = textSecondary}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              {lang === 'am' ? 'ወደ ኋላ ተመለስ' : 'Back to Holidays'}
+            </button>
+
+            {/* Main content card */}
+            <div style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 24, overflow: 'hidden', boxShadow: darkMode ? '0 12px 40px rgba(0,0,0,0.3)' : '0 12px 40px rgba(0,0,0,0.06)' }}>
+              
+              {/* Hero Image */}
+              <div style={{ position: 'relative', height: 320, width: '100%' }}>
+                {meta.image ? (
+                  <img src={meta.image} alt={holiday.key} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', background: GRADIENT_FALLBACKS[holiday.key] || '#1a6e35' }} />
+                )}
+                {/* Gradient overlay to make text pop if we had text overlay */}
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 40%)' }} />
+                
+                {/* Days away badge overlay */}
+                {daysAway !== null && daysAway >= 0 && daysAway <= 90 && (
+                  <div style={{ position: 'absolute', bottom: 20, left: 24 }}>
+                    <span style={{
+                      background: daysAway === 0 ? '#16a34a' : daysAway <= 7 ? '#f59e0b' : '#374151',
+                      color: '#fff', fontSize: 13, fontWeight: 700, padding: '6px 14px', borderRadius: 20,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                    }}>
+                      {daysAway === 0 ? '🎉 Today' : daysAway === 1 ? 'Tomorrow' : `In ${daysAway} days`}
+                    </span>
                   </div>
                 )}
               </div>
 
-              {/* Divider */}
-              <div className={`my-4 h-px ${darkMode ? 'bg-gray-700/60' : 'bg-gray-100'}`} />
+              {/* Detail Content */}
+              <div style={{ padding: '36px 40px 48px' }}>
+                
+                {/* Title Row */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20, marginBottom: 24, flexWrap: 'wrap' }}>
+                  <div>
+                    <h1 style={{ color: textPrimary, fontSize: 32, fontWeight: 800, margin: '0 0 6px', lineHeight: 1.15 }}>
+                      {lang === 'am' ? holiday.nameAm.split(' (')[0] : holiday.nameEn.split(' (')[0]}
+                    </h1>
+                    <div style={{ color: '#16a34a', fontSize: 16, fontWeight: 600 }}>
+                      {lang === 'am' ? holiday.nameAm : holiday.nameEn}
+                    </div>
+                  </div>
+                  
+                  {/* Tags */}
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ background: darkMode ? '#334155' : '#f3f4f6', color: textPrimary, padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600 }}>
+                      {holiday.movable ? (lang === 'am' ? 'ተንቀሳቃሽ በዓል' : 'Movable Holiday') : (lang === 'am' ? 'ቋሚ በዓል' : 'Fixed Holiday')}
+                    </span>
+                    {(meta.tags || []).map(t => <TagBadge key={t} tag={t} />)}
+                  </div>
+                </div>
 
-              {/* Type */}
-              <div className="flex items-center justify-between">
-                <p className={`text-[11px] font-semibold uppercase tracking-wider ${mutedText}`}>
-                  {L.type}
-                </p>
-                <span className={`text-xs font-medium px-3 py-1 rounded-full ${
-                  holiday.movable
-                    ? darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-600'
-                    : darkMode ? 'bg-green-900/40 text-green-300' : 'bg-green-50 text-green-600'
-                }`}>
-                  {holiday.movable ? L.movable : L.fixed}
-                </span>
+                {/* Info Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginBottom: 36 }}>
+                  {/* Ethiopian Date */}
+                  <div style={{ background: darkMode ? '#0f172a' : '#f8fafc', padding: '20px 24px', borderRadius: 16, border: `1px solid ${border}` }}>
+                    <div style={{ color: textSecondary, fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+                      🇪🇹 {lang === 'am' ? 'የኢትዮጵያ ቀን' : 'Ethiopian Date'}
+                    </div>
+                    <div style={{ color: textPrimary, fontSize: 24, fontWeight: 800 }}>
+                      {etMonth} {holiday.day}
+                    </div>
+                    <div style={{ color: textSecondary, fontSize: 14, marginTop: 2 }}>
+                      {holiday.eYear} EC
+                    </div>
+                  </div>
+
+                  {/* Gregorian Date */}
+                  <div style={{ background: darkMode ? '#0f172a' : '#f8fafc', padding: '20px 24px', borderRadius: 16, border: `1px solid ${border}` }}>
+                    <div style={{ color: textSecondary, fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+                      🌍 {lang === 'am' ? 'ጎርጎሮሲያን ቀን' : 'Gregorian Date'}
+                    </div>
+                    <div style={{ color: textPrimary, fontSize: 24, fontWeight: 800 }}>
+                      {gregLabel ? gregLabel.split(',')[0] : 'TBD'}
+                    </div>
+                    <div style={{ color: textSecondary, fontSize: 14, marginTop: 2 }}>
+                      {gregLabel ? gregLabel.split(',').slice(1).join(',').trim() : ''}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <h3 style={{ color: textPrimary, fontSize: 18, fontWeight: 700, margin: '0 0 12px' }}>
+                    {lang === 'am' ? 'ስለ በዓሉ' : 'About this Holiday'}
+                  </h3>
+                  <p style={{ color: textSecondary, fontSize: 16, lineHeight: 1.7, margin: 0 }}>
+                    {lang === 'am' ? descAm : descEn}
+                  </p>
+                </div>
+
               </div>
             </div>
 
-            {/* ── Description ─────────────────────────────────────────── */}
-            <div className={`rounded-2xl border p-5 shadow-sm ${cardBg}`}>
-              <p className={`text-[11px] font-semibold uppercase tracking-wider mb-3 ${mutedText}`}>
-                {L.about}
-              </p>
-              <p
-                className={`text-base leading-relaxed ${bodyText}`}
-                style={{ fontFamily: lang === 'am' ? "'Noto Sans Ethiopic',sans-serif" : 'inherit' }}
-              >
-                {lang === 'am' ? holiday.descAm : holiday.descEn}
-              </p>
-            </div>
-          </>
-        )}
-      </main>
+          </div>
+        </div>
       </div>
     </div>
   );
