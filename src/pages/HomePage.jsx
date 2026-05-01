@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
 import BorderGlow from '../components/BorderGlow';
 import {
   gregorianToEthiopian,
@@ -26,7 +26,56 @@ const HOLIDAY_COLORS = [
   { bg: '#fefce8', icon: '#eab308', badge: '#fef9c3', text: '#a16207', daysColor: '#ca8a04' },
 ];
 
+// ── Tilt Card Component ───────────────────────────────────────────────────────
+function TiltCard({ children, style, darkMode }) {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
 
+  const mouseXSpring = useSpring(x, { stiffness: 300, damping: 20 });
+  const mouseYSpring = useSpring(y, { stiffness: 300, damping: 20 });
+
+  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["8deg", "-8deg"]);
+  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-8deg", "8deg"]);
+
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const xPct = mouseX / width - 0.5;
+    const yPct = mouseY / height - 0.5;
+    x.set(xPct);
+    y.set(yPct);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.div
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        ...style,
+        rotateX,
+        rotateY,
+        transformStyle: "preserve-3d",
+        perspective: 1000,
+      }}
+      whileHover={{ 
+        scale: 1.05, 
+        y: -5,
+        boxShadow: darkMode ? '0 10px 30px rgba(0,0,0,0.3)' : '0 10px 30px rgba(0,0,0,0.1)'
+      }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 // ── Quick Converter (minimal inline) ────────────────────────────────────────
 function QuickConverter({ lang, darkMode }) {
@@ -296,18 +345,10 @@ export default function HomePage({ lang, darkMode, setActiveTab }) {
               { icon: '☕', en: 'Ethiopia is the birthplace of coffee', am: 'ኢትዮጵያ የቡና መገኛ ናት', enDesc: 'Coffee Arabica was first discovered natively growing in the Kaffa region.', amDesc: 'የአረቢካ ቡና ለመጀመሪያ ጊዜ የተገኘው በኢትዮጵያ ካፋ ክፍለ ሀገር ነው።', bg: '#fef9c3', darkBg: 'rgba(161,98,7,0.1)' },
               { icon: '🛡️', en: 'Ethiopia was never colonized', am: 'ኢትዮጵያ መቼም በቅኝ አልተገዛችም', enDesc: 'It is the only African nation to defeat a European colonial power and remain independent.', amDesc: 'ኢትዮጵያ ከአፍሪካ ሀገራት በአውሮፓውያን ቅኝ ግዛት ስር ያልወደቀች ብቸኛዋ ሀገር ናት።', bg: '#fee2e2', darkBg: 'rgba(220,38,38,0.1)' },
               { icon: '🔤', en: 'Ethiopia has its own alphabets', am: 'ኢትዮጵያ የራሷ ፊደል አላት', enDesc: 'The Ge\'ez script is one of the oldest indigenous African scripts still in active use today.', amDesc: 'የግዕዝ ፊደል እስከ አሁን ድረስ በጥቅም ላይ የሚውል ብቸኛው አፍሪካዊ የጽሕፈት ስልት ነው።', bg: '#f3e8ff', darkBg: 'rgba(147,51,234,0.1)' },
-            ].map((fact, idx) => {
-              const tiltAngle = idx % 2 === 0 ? 3 : -3;
-              return (
-              <motion.div 
+            ].map((fact, idx) => (
+              <TiltCard 
                 key={idx} 
-                whileHover={{ 
-                  scale: 1.05, 
-                  rotate: tiltAngle,
-                  y: -5,
-                  boxShadow: darkMode ? '0 10px 30px rgba(0,0,0,0.3)' : '0 10px 30px rgba(0,0,0,0.1)'
-                }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                darkMode={darkMode}
                 style={{
                   borderRadius: 16,
                   display: 'flex',
@@ -336,11 +377,11 @@ export default function HomePage({ lang, darkMode, setActiveTab }) {
                     boxSizing: 'border-box'
                   }}>
                     <div style={{
-                      width: 44, height: 44,
+                      width: 50, height: 50,
                       borderRadius: 12,
                       background: darkMode ? fact.darkBg : fact.bg,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 22
+                      fontSize: 25
                     }}>
                       {fact.icon}
                     </div>
@@ -354,8 +395,8 @@ export default function HomePage({ lang, darkMode, setActiveTab }) {
                     </div>
                   </div>
                 </BorderGlow>
-              </motion.div>
-            );})}
+              </TiltCard>
+            ))}
           </div>
         </div>
 

@@ -33,26 +33,49 @@ function toDateInputValue(d) {
 }
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTH_NAMES_AM = ['ጃንዩወሪ','ፌብሩወሪ','ማርች','ኤፕሪል','ሜይ','ጁን','ጁላይ','ኦገስት','ሴፕቴምበር','ኦክቶበር','ኖቬምበር','ዲሴምበር'];
 
 export default function ConverterPage({ lang, darkMode }) {
-  const [gregInput, setGregInput] = useState(() => toDateInputValue(new Date()));
+  const [direction, setDirection] = useState('gToE');
+  const [gregYear, setGregYear]   = useState(() => new Date().getFullYear().toString());
+  const [gregMonth, setGregMonth] = useState(() => (new Date().getMonth() + 1).toString());
+  const [gregDay, setGregDay]     = useState(() => new Date().getDate().toString());
+  const [ethYear, setEthYear]     = useState(() => gregorianToEthiopian(new Date()).year.toString());
+  const [ethMonth, setEthMonth]   = useState(() => gregorianToEthiopian(new Date()).month.toString());
+  const [ethDay, setEthDay]       = useState(() => gregorianToEthiopian(new Date()).day.toString());
   const [result, setResult]       = useState(null);
   const [copied, setCopied]       = useState(false);
   const [recent, setRecent]       = useState(INITIAL_RECENT);
 
-  // Derive result whenever gregInput changes
+  // Derive result whenever inputs change
   useEffect(() => {
-    if (!gregInput) return;
     let gDate;
-    const parts = gregInput.split('-');
-    if (parts.length === 3) {
-      gDate = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+    let et;
+    
+    if (direction === 'gToE') {
+      if (!gregYear || !gregMonth || !gregDay) return;
+      const y = +gregYear;
+      const m = +gregMonth;
+      const d = +gregDay;
+      if (y < 1000 || m < 1 || m > 12 || d < 1 || d > 31) return;
+      gDate = new Date(y, m - 1, d);
+      // Validate correct parsing (e.g. catch Feb 30 becoming Mar 2)
+      if (isNaN(gDate) || gDate.getMonth() !== m - 1 || gDate.getDate() !== d) return;
+      et = gregorianToEthiopian(gDate);
     } else {
-      gDate = new Date(gregInput);
+      if (!ethYear || !ethMonth || !ethDay) return;
+      const y = +ethYear;
+      const m = +ethMonth;
+      const d = +ethDay;
+      if (y < 1 || m < 1 || m > 13 || d < 1 || d > 30) return;
+      try {
+        gDate = ethiopianToGregorian(y, m, d);
+        et = { year: y, month: m, day: d };
+      } catch (e) {
+        return;
+      }
     }
-    if (isNaN(gDate) || gDate.getFullYear() < 1000) return;
 
-    const et      = gregorianToEthiopian(gDate);
     const months  = ET_MONTHS_EN;
     const monthsAm= ET_MONTHS_AM;
     const zi      = getZemene(et.year);
@@ -62,6 +85,7 @@ export default function ConverterPage({ lang, darkMode }) {
       gDate,
       gDay:   gDate.getDate(),
       gMonth: MONTH_NAMES[gDate.getMonth()],
+      gMonthAm: MONTH_NAMES_AM[gDate.getMonth()],
       gYear:  gDate.getFullYear(),
       et,
       etMonthEn: months[et.month - 1],
@@ -73,7 +97,11 @@ export default function ConverterPage({ lang, darkMode }) {
       zemeneAm:  ZEMENE_LABEL_AM[zi],
       holiday:   holiday ? (lang === 'am' ? holiday.nameAm : holiday.nameEn) : null,
     });
-  }, [gregInput, lang]);
+  }, [gregYear, gregMonth, gregDay, ethYear, ethMonth, ethDay, direction, lang]);
+
+  const toggleDirection = () => {
+    setDirection(d => d === 'gToE' ? 'eToG' : 'gToE');
+  };
 
   const handleCopy = useCallback(() => {
     if (!result) return;
@@ -168,128 +196,303 @@ export default function ConverterPage({ lang, darkMode }) {
         {/* ── Converter panels ── */}
         <div style={{ display: 'flex', gap: 0, alignItems: 'stretch', marginBottom: 20, borderRadius: 20, overflow: 'hidden', boxShadow: darkMode ? '0 4px 32px rgba(0,0,0,0.4)' : '0 4px 32px rgba(0,0,0,0.08)', position: 'relative' }}>
 
-          {/* LEFT: Gregorian */}
+          {/* LEFT: Input */}
           <div style={{ flex: 1, background: cardBg, padding: '28px 28px 28px', minWidth: 0 }}>
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: darkMode ? '#0f172a' : '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={darkMode ? '#94a3b8' : '#6b7280'} strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
-              </div>
-              <div>
-                <div style={{ color: textPrimary, fontWeight: 700, fontSize: 17 }}>
-                  {lang === 'am' ? 'ጎርጎሮሲያን' : 'Gregorian'}
-                </div>
-                <div style={{ color: textSecondary, fontSize: 12 }}>
-                  {lang === 'am' ? 'ዓለምአቀፍ ደረጃ' : 'Standard International'}
-                </div>
-              </div>
-            </div>
-
-            {/* Date input */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', color: textSecondary, fontSize: 12, fontWeight: 600, marginBottom: 8, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                {lang === 'am' ? 'ቀን ይምረጡ' : 'Select Date'}
-              </label>
-              <input
-                type="date"
-                value={gregInput}
-                onChange={e => setGregInput(e.target.value)}
-                style={{
-                  width: '100%', padding: '12px 16px', borderRadius: 12,
-                  border: `1px solid ${border}`, background: inputBg,
-                  color: textPrimary, fontSize: 16, fontWeight: 600,
-                  outline: 'none', cursor: 'pointer', boxSizing: 'border-box',
-                  colorScheme: darkMode ? 'dark' : 'light',
-                }}
-              />
-            </div>
-
-            {/* Month / Day / Year breakdown */}
-            {result && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-                {[
-                  { label: lang === 'am' ? 'ወር' : 'Month', value: result.gMonth },
-                  { label: lang === 'am' ? 'ቀን' : 'Day',   value: result.gDay   },
-                  { label: lang === 'am' ? 'ዓመት' : 'Year', value: result.gYear  },
-                ].map(({ label, value }) => (
-                  <div key={label} style={{ background: darkMode ? '#0f172a' : '#f9fafb', borderRadius: 10, padding: '12px 10px', textAlign: 'center', border: `1px solid ${border}` }}>
-                    <div style={{ color: textSecondary, fontSize: 11, fontWeight: 600, marginBottom: 4 }}>{label}</div>
-                    <div style={{ color: textPrimary, fontWeight: 700, fontSize: 15 }}>{value}</div>
+            {direction === 'gToE' ? (
+              <>
+                {/* Header Gregorian */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: darkMode ? '#0f172a' : '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={darkMode ? '#94a3b8' : '#6b7280'} strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
                   </div>
-                ))}
-              </div>
+                  <div>
+                    <div style={{ color: textPrimary, fontWeight: 700, fontSize: 17 }}>
+                      {lang === 'am' ? 'ጎርጎሮሲያን' : 'Gregorian'}
+                    </div>
+                    <div style={{ color: textSecondary, fontSize: 12 }}>
+                      {lang === 'am' ? 'ዓለምአቀፍ ደረጃ' : 'Standard International'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Date input */}
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', color: textSecondary, fontSize: 12, fontWeight: 600, marginBottom: 8, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                    {lang === 'am' ? 'ቀን ይምረጡ' : 'Select Date'}
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr 1fr', gap: 8 }}>
+                    <input
+                      type="number"
+                      placeholder={lang === 'am' ? 'ዓመት' : 'Year'}
+                      value={gregYear}
+                      onChange={e => setGregYear(e.target.value)}
+                      style={{
+                        width: '100%', padding: '12px 16px', borderRadius: 12,
+                        border: `1px solid ${border}`, background: inputBg,
+                        color: textPrimary, fontSize: 16, fontWeight: 600,
+                        outline: 'none', boxSizing: 'border-box'
+                      }}
+                    />
+                    <select
+                      value={gregMonth}
+                      onChange={e => setGregMonth(e.target.value)}
+                      style={{
+                        width: '100%', padding: '12px 16px', borderRadius: 12,
+                        border: `1px solid ${border}`, background: inputBg,
+                        color: textPrimary, fontSize: 16, fontWeight: 600,
+                        outline: 'none', cursor: 'pointer', boxSizing: 'border-box'
+                      }}
+                    >
+                      {(lang === 'am' ? MONTH_NAMES_AM : MONTH_NAMES).map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                    </select>
+                    <input
+                      type="number"
+                      placeholder={lang === 'am' ? 'ቀን' : 'Day'}
+                      min="1" max="31"
+                      value={gregDay}
+                      onChange={e => setGregDay(e.target.value)}
+                      style={{
+                        width: '100%', padding: '12px 16px', borderRadius: 12,
+                        border: `1px solid ${border}`, background: inputBg,
+                        color: textPrimary, fontSize: 16, fontWeight: 600,
+                        outline: 'none', boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Month / Day / Year breakdown */}
+                {result && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                    {[
+                      { label: lang === 'am' ? 'ወር' : 'Month', value: lang === 'am' ? result.gMonthAm : result.gMonth },
+                      { label: lang === 'am' ? 'ቀን' : 'Day',   value: result.gDay   },
+                      { label: lang === 'am' ? 'ዓመት' : 'Year', value: result.gYear  },
+                    ].map(({ label, value }) => (
+                      <div key={label} style={{ background: darkMode ? '#0f172a' : '#f9fafb', borderRadius: 10, padding: '12px 10px', textAlign: 'center', border: `1px solid ${border}` }}>
+                        <div style={{ color: textSecondary, fontSize: 11, fontWeight: 600, marginBottom: 4 }}>{label}</div>
+                        <div style={{ color: textPrimary, fontWeight: 700, fontSize: 15 }}>{value}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                {/* Header Ethiopian */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: darkMode ? '#0f172a' : '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={darkMode ? '#94a3b8' : '#6b7280'} strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+                  </div>
+                  <div>
+                    <div style={{ color: textPrimary, fontWeight: 700, fontSize: 17 }}>
+                      {lang === 'am' ? 'ኢትዮጵያ' : 'Ethiopian'}
+                    </div>
+                    <div style={{ color: textSecondary, fontSize: 12 }}>
+                      {lang === 'am' ? 'ጥንታዊ ቅርስ' : 'Ancient Heritage'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ethiopian Date Inputs */}
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', color: textSecondary, fontSize: 12, fontWeight: 600, marginBottom: 8, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                    {lang === 'am' ? 'ቀን ይምረጡ' : 'Select Date'}
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr 1fr', gap: 8 }}>
+                    <input
+                      type="number"
+                      placeholder={lang === 'am' ? 'ዓመት' : 'Year'}
+                      value={ethYear}
+                      onChange={e => setEthYear(e.target.value)}
+                      style={{
+                        width: '100%', padding: '12px 16px', borderRadius: 12,
+                        border: `1px solid ${border}`, background: inputBg,
+                        color: textPrimary, fontSize: 16, fontWeight: 600,
+                        outline: 'none', boxSizing: 'border-box'
+                      }}
+                    />
+                    <select
+                      value={ethMonth}
+                      onChange={e => setEthMonth(e.target.value)}
+                      style={{
+                        width: '100%', padding: '12px 16px', borderRadius: 12,
+                        border: `1px solid ${border}`, background: inputBg,
+                        color: textPrimary, fontSize: 16, fontWeight: 600,
+                        outline: 'none', cursor: 'pointer', boxSizing: 'border-box'
+                      }}
+                    >
+                      {(lang === 'am' ? ET_MONTHS_AM : ET_MONTHS_EN).map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                    </select>
+                    <input
+                      type="number"
+                      placeholder={lang === 'am' ? 'ቀን' : 'Day'}
+                      min="1" max="30"
+                      value={ethDay}
+                      onChange={e => setEthDay(e.target.value)}
+                      style={{
+                        width: '100%', padding: '12px 16px', borderRadius: 12,
+                        border: `1px solid ${border}`, background: inputBg,
+                        color: textPrimary, fontSize: 16, fontWeight: 600,
+                        outline: 'none', boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Month / Day / Year breakdown */}
+                {result && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                    {[
+                      { label: lang === 'am' ? 'ወር' : 'Month', value: lang === 'am' ? result.etMonthAm : result.etMonthEn },
+                      { label: lang === 'am' ? 'ቀን' : 'Day',   value: result.et.day   },
+                      { label: lang === 'am' ? 'ዓመት' : 'Year', value: result.et.year  },
+                    ].map(({ label, value }) => (
+                      <div key={label} style={{ background: darkMode ? '#0f172a' : '#f9fafb', borderRadius: 10, padding: '12px 10px', textAlign: 'center', border: `1px solid ${border}` }}>
+                        <div style={{ color: textSecondary, fontSize: 11, fontWeight: 600, marginBottom: 4 }}>{label}</div>
+                        <div style={{ color: textPrimary, fontWeight: 700, fontSize: 15 }}>{value}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
 
           {/* Swap button (absolute center) */}
           <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 10 }}>
-            <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(22,163,74,0.4)' }}>
+            <button onClick={toggleDirection} style={{ width: 44, height: 44, borderRadius: '50%', background: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(22,163,74,0.4)', border: 'none', cursor: 'pointer', transition: 'transform 0.2s', padding: 0 }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
                 <polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
               </svg>
-            </div>
+            </button>
           </div>
 
-          {/* RIGHT: Ethiopian */}
+          {/* RIGHT: Output */}
           <div style={{ flex: 1, background: '#1a6e35', padding: '28px 28px 28px', minWidth: 0 }}>
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
-              </div>
-              <div>
-                <div style={{ color: '#fff', fontWeight: 700, fontSize: 17 }}>
-                  {lang === 'am' ? 'ኢትዮጵያ' : 'Ethiopian'}
-                </div>
-                <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>
-                  {lang === 'am' ? 'ጥንታዊ ቅርስ' : 'Ancient Heritage'}
-                </div>
-              </div>
-            </div>
-
-            {/* Big Ethiopian date */}
-            {result ? (
+            {direction === 'gToE' ? (
               <>
-                <div style={{ marginBottom: 4 }}>
-                  <div style={{ color: '#fff', fontSize: 34, fontWeight: 800, fontFamily: "'Noto Sans Ethiopic', sans-serif", lineHeight: 1.15 }}>
-                    {result.etMonthAm} {result.et.day}, {result.et.year}
+                {/* Header Ethiopian */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
                   </div>
-                  <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 15, marginTop: 4 }}>
-                    {result.etMonthEn} {result.et.day}, {result.et.year}
-                  </div>
-                  {result.holiday && (
-                    <div style={{ marginTop: 8, background: 'rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 12px', color: '#fff', fontSize: 12, fontWeight: 600, display: 'inline-block' }}>
-                      🎉 {result.holiday}
+                  <div>
+                    <div style={{ color: '#fff', fontWeight: 700, fontSize: 17 }}>
+                      {lang === 'am' ? 'ኢትዮጵያ' : 'Ethiopian'}
                     </div>
-                  )}
+                    <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>
+                      {lang === 'am' ? 'ጥንታዊ ቅርስ' : 'Ancient Heritage'}
+                    </div>
+                  </div>
                 </div>
 
-                {/* Zemene + Day */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1px 1fr', gap: 0, marginTop: 20, background: 'rgba(0,0,0,0.18)', borderRadius: 12, overflow: 'hidden' }}>
-                  <div style={{ padding: '14px 16px' }}>
-                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', marginBottom: 4 }}>
-                      {lang === 'am' ? 'ዘመን' : 'Zemene'}
+                {/* Big Ethiopian date */}
+                {result ? (
+                  <>
+                    <div style={{ marginBottom: 4 }}>
+                      <div style={{ color: '#fff', fontSize: 34, fontWeight: 800, fontFamily: "'Noto Sans Ethiopic', sans-serif", lineHeight: 1.15 }}>
+                        {result.etMonthAm} {result.et.day}, {result.et.year}
+                      </div>
+                      <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 15, marginTop: 4 }}>
+                        {result.etMonthEn} {result.et.day}, {result.et.year}
+                      </div>
+                      {result.holiday && (
+                        <div style={{ marginTop: 8, background: 'rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 12px', color: '#fff', fontSize: 12, fontWeight: 600, display: 'inline-block' }}>
+                          🎉 {result.holiday}
+                        </div>
+                      )}
                     </div>
-                    <div style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>
-                      {lang === 'am' ? result.zemeneAm : result.zemeneEn}
+
+                    {/* Zemene + Day */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1px 1fr', gap: 0, marginTop: 20, background: 'rgba(0,0,0,0.18)', borderRadius: 12, overflow: 'hidden' }}>
+                      <div style={{ padding: '14px 16px' }}>
+                        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', marginBottom: 4 }}>
+                          {lang === 'am' ? 'ዘመን' : 'Zemene'}
+                        </div>
+                        <div style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>
+                          {lang === 'am' ? result.zemeneAm : result.zemeneEn}
+                        </div>
+                      </div>
+                      <div style={{ background: 'rgba(255,255,255,0.15)' }} />
+                      <div style={{ padding: '14px 16px', textAlign: 'right' }}>
+                        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', marginBottom: 4 }}>
+                          {lang === 'am' ? 'ቀን' : 'Day'}
+                        </div>
+                        <div style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>
+                          {lang === 'am'
+                            ? `${result.dayNameAm}`
+                            : `${result.dayNameAm} (${result.dayNameEn})`}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div style={{ background: 'rgba(255,255,255,0.15)' }} />
-                  <div style={{ padding: '14px 16px', textAlign: 'right' }}>
-                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', marginBottom: 4 }}>
-                      {lang === 'am' ? 'ቀን' : 'Day'}
-                    </div>
-                    <div style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>
-                      {lang === 'am'
-                        ? `${result.dayNameAm}`
-                        : `${result.dayNameAm} (${result.dayNameEn})`}
-                    </div>
-                  </div>
-                </div>
+                  </>
+                ) : (
+                  <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>Calculating…</div>
+                )}
               </>
             ) : (
-              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>Calculating…</div>
+              <>
+                {/* Header Gregorian */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+                  </div>
+                  <div>
+                    <div style={{ color: '#fff', fontWeight: 700, fontSize: 17 }}>
+                      {lang === 'am' ? 'ጎርጎሮሲያን' : 'Gregorian'}
+                    </div>
+                    <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>
+                      {lang === 'am' ? 'ዓለምአቀፍ ደረጃ' : 'Standard International'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Big Gregorian date */}
+                {result ? (
+                  <>
+                    <div style={{ marginBottom: 4 }}>
+                      <div style={{ color: '#fff', fontSize: 34, fontWeight: 800, fontFamily: "'Inter', sans-serif", lineHeight: 1.15 }}>
+                        {result.gMonth} {result.gDay}, {result.gYear}
+                      </div>
+                      <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 15, marginTop: 4 }}>
+                        {result.dayNameEn}
+                      </div>
+                      {result.holiday && (
+                        <div style={{ marginTop: 8, background: 'rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 12px', color: '#fff', fontSize: 12, fontWeight: 600, display: 'inline-block' }}>
+                          🎉 {result.holiday}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Zemene + Day */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1px 1fr', gap: 0, marginTop: 20, background: 'rgba(0,0,0,0.18)', borderRadius: 12, overflow: 'hidden' }}>
+                      <div style={{ padding: '14px 16px' }}>
+                        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', marginBottom: 4 }}>
+                          {lang === 'am' ? 'ዘመን' : 'Zemene'}
+                        </div>
+                        <div style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>
+                          {lang === 'am' ? result.zemeneAm : result.zemeneEn}
+                        </div>
+                      </div>
+                      <div style={{ background: 'rgba(255,255,255,0.15)' }} />
+                      <div style={{ padding: '14px 16px', textAlign: 'right' }}>
+                        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', marginBottom: 4 }}>
+                          {lang === 'am' ? 'ቀን' : 'Day'}
+                        </div>
+                        <div style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>
+                          {lang === 'am'
+                            ? `${result.dayNameAm}`
+                            : `${result.dayNameAm} (${result.dayNameEn})`}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>Calculating…</div>
+                )}
+              </>
             )}
           </div>
         </div>
