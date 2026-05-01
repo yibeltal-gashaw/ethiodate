@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   gregorianToEthiopian,
   getEthiopianMonthDays,
   daysInEthiopianMonth,
   getHolidayOnDate,
-  getCurrentEthiopianPage,
   ethiopianToGregorian,
   ET_MONTHS_EN,
   ET_MONTHS_AM,
@@ -18,22 +17,26 @@ const LABELS = {
     ethView: 'Ethiopian',
     gregView: 'Gregorian',
     today: 'Today',
-    prev: '‹',
-    next: '›',
+    prev: '←',
+    next: '→',
+    legendToday: 'Today',
+    legendHoliday: 'Holiday',
   },
   am: {
     title: 'ቀን መቁጠሪያ',
     ethView: 'ኢትዮጵያ',
     gregView: 'ጎርጎሮስ',
     today: 'ዛሬ',
-    prev: '‹',
-    next: '›',
+    prev: '←',
+    next: '→',
+    legendToday: 'ዛሬ',
+    legendHoliday: 'በዓል',
   },
 };
 
 const GREG_MONTHS_EN = [
   'January','February','March','April','May','June',
-  'July','August','September','October','November','December'
+  'July','August','September','October','November','December',
 ];
 
 export default function CalendarView({ lang = 'en', darkMode = false }) {
@@ -41,15 +44,13 @@ export default function CalendarView({ lang = 'en', darkMode = false }) {
   const today = new Date();
   const todayEt = gregorianToEthiopian(today);
 
-  const [view, setView] = useState('eth'); // 'eth' | 'greg'
+  const [view, setView] = useState('eth');
   const [eYear, setEYear] = useState(todayEt.year);
   const [eMonth, setEMonth] = useState(todayEt.month);
-  // Gregorian view state
   const [gYear, setGYear] = useState(today.getFullYear());
-  const [gMonth, setGMonth] = useState(today.getMonth()); // 0-indexed
+  const [gMonth, setGMonth] = useState(today.getMonth());
 
   const months = lang === 'am' ? ET_MONTHS_AM : ET_MONTHS_EN;
-  const days = lang === 'am' ? ET_DAYS_AM : ET_DAYS_EN;
 
   const goToToday = () => {
     setEYear(todayEt.year);
@@ -78,17 +79,19 @@ export default function CalendarView({ lang = 'en', darkMode = false }) {
     }
   };
 
-  const cardBg = darkMode
-    ? 'bg-gray-800/60 border-gray-700/50'
-    : 'bg-white/80 border-gray-200/60';
+  const surface = darkMode ? 'bg-[#181c27] border-white/[0.07]' : 'bg-white border-black/[0.06]';
+  const labelColor = darkMode ? 'text-slate-400' : 'text-slate-500';
+  const headColor = darkMode ? 'text-slate-500' : 'text-slate-400';
+  const navBtn = darkMode
+    ? 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-white/[0.06] hover:text-white transition-colors'
+    : 'w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors';
 
-  // ── Ethiopian calendar grid ──────────────────────────────────────────────
-  const renderEthiopianGrid = () => {
+  const renderEthGrid = () => {
     const days2 = getEthiopianMonthDays(eYear, eMonth);
-    const firstDow = days2[0]?.dayOfWeek ?? 0; // 0=Sun
+    const firstDow = days2[0]?.dayOfWeek ?? 0;
     const totalDays = daysInEthiopianMonth(eYear, eMonth);
+    const dayHeaders = lang === 'am' ? ET_DAYS_AM : ET_DAYS_EN;
 
-    // Build padded array
     const cells = Array(firstDow).fill(null);
     for (let d = 1; d <= totalDays; d++) {
       const gDate = ethiopianToGregorian(eYear, eMonth, d);
@@ -99,41 +102,24 @@ export default function CalendarView({ lang = 'en', darkMode = false }) {
 
     return (
       <div className="grid grid-cols-7 gap-1">
-        {/* Day headers */}
-        {(lang === 'am' ? ET_DAYS_AM : ET_DAYS_EN).map((d, i) => (
-          <div key={i} className={`text-center text-xs font-medium py-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}
-            style={{ fontFamily: lang === 'am' ? "'Noto Sans Ethiopic', sans-serif" : 'inherit' }}>
+        {dayHeaders.map((d, i) => (
+          <div
+            key={i}
+            className={`text-center text-[10px] font-semibold uppercase py-2 ${headColor}`}
+            style={{ fontFamily: lang === 'am' ? "'Noto Sans Ethiopic', sans-serif" : 'inherit' }}
+          >
             {d.slice(0, 2)}
           </div>
         ))}
-        {/* Day cells */}
         {cells.map((cell, i) => {
-          if (!cell) return <div key={`empty-${i}`} />;
+          if (!cell) return <div key={`e-${i}`} />;
           return (
             <div
               key={cell.day}
               title={cell.holiday ? (lang === 'am' ? cell.holiday.nameAm : cell.holiday.nameEn) : undefined}
-              className={`
-                relative flex flex-col items-center justify-center rounded-lg
-                aspect-square text-sm font-medium cursor-default
-                transition-colors duration-150
-                ${cell.isToday
-                  ? 'bg-green-500 text-white shadow-sm shadow-green-300/50'
-                  : cell.holiday
-                    ? darkMode ? 'bg-yellow-900/30 text-yellow-300' : 'bg-yellow-50 text-yellow-700'
-                    : darkMode
-                      ? 'text-gray-200 hover:bg-gray-700'
-                      : 'text-gray-700 hover:bg-gray-50'
-                }
-              `}
+              className={`cal-day text-sm ${cell.isToday ? 'today' : cell.holiday ? 'holiday' : ''}`}
             >
               <span>{cell.day}</span>
-              {cell.holiday && !cell.isToday && (
-                <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-yellow-400" />
-              )}
-              {cell.isToday && cell.holiday && (
-                <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-yellow-300" />
-              )}
             </div>
           );
         })}
@@ -141,8 +127,7 @@ export default function CalendarView({ lang = 'en', darkMode = false }) {
     );
   };
 
-  // ── Gregorian calendar grid ─────────────────────────────────────────────
-  const renderGregorianGrid = () => {
+  const renderGregGrid = () => {
     const firstDay = new Date(gYear, gMonth, 1).getDay();
     const totalDays = new Date(gYear, gMonth + 1, 0).getDate();
     const gregDays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -152,45 +137,31 @@ export default function CalendarView({ lang = 'en', darkMode = false }) {
       const gDate = new Date(gYear, gMonth, d);
       const et = gregorianToEthiopian(gDate);
       const holiday = getHolidayOnDate(et.year, et.month, et.day);
-      const isToday =
-        today.getFullYear() === gYear && today.getMonth() === gMonth && today.getDate() === d;
+      const isToday = today.getFullYear() === gYear && today.getMonth() === gMonth && today.getDate() === d;
       cells.push({ day: d, et, holiday, isToday, gDate });
     }
 
     return (
       <div className="grid grid-cols-7 gap-1">
         {gregDays.map((d, i) => (
-          <div key={i} className={`text-center text-xs font-medium py-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
+          <div key={i} className={`text-center text-[10px] font-semibold uppercase py-2 ${headColor}`}>
             {d}
           </div>
         ))}
         {cells.map((cell, i) => {
-          if (!cell) return <div key={`empty-${i}`} />;
+          if (!cell) return <div key={`g-${i}`} />;
           return (
             <div
               key={cell.day}
               title={cell.holiday ? (lang === 'am' ? cell.holiday.nameAm : cell.holiday.nameEn) : undefined}
-              className={`
-                relative flex flex-col items-center justify-center rounded-lg
-                aspect-square text-xs font-medium cursor-default
-                transition-colors duration-150
-                ${cell.isToday
-                  ? 'bg-green-500 text-white'
-                  : cell.holiday
-                    ? darkMode ? 'bg-yellow-900/30 text-yellow-300' : 'bg-yellow-50 text-yellow-700'
-                    : darkMode
-                      ? 'text-gray-200 hover:bg-gray-700'
-                      : 'text-gray-700 hover:bg-gray-50'
-                }
-              `}
+              className={`cal-day ${cell.isToday ? 'today' : cell.holiday ? 'holiday' : ''}`}
             >
-              <span className="text-sm">{cell.day}</span>
-              <span className={`text-[9px] leading-none ${cell.isToday ? 'text-green-100' : darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                {cell.et.day}/{lang === 'am' ? ET_MONTHS_AM[cell.et.month - 1] : ET_MONTHS_EN[cell.et.month - 1]}
+              <span className="text-sm font-medium">{cell.day}</span>
+              <span className={`text-[9px] leading-none mt-0.5 ${
+                cell.isToday ? 'text-emerald-100' : darkMode ? 'text-slate-600' : 'text-slate-400'
+              }`}>
+                {cell.et.day}/{lang === 'am' ? ET_MONTHS_AM[cell.et.month - 1].slice(0, 3) : ET_MONTHS_EN[cell.et.month - 1].slice(0, 3)}
               </span>
-              {cell.holiday && !cell.isToday && (
-                <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-yellow-400" />
-              )}
             </div>
           );
         })}
@@ -203,81 +174,72 @@ export default function CalendarView({ lang = 'en', darkMode = false }) {
     : `${GREG_MONTHS_EN[gMonth]} ${gYear}`;
 
   return (
-    <div className={`rounded-2xl border backdrop-blur-sm p-6 shadow-sm ${cardBg} transition-all duration-300`}>
-      {/* Header row */}
-      <div className="flex items-center justify-between mb-5">
-        <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-          {L.title}
-        </h2>
-        <button
-          onClick={goToToday}
-          className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all duration-200 ${
-            darkMode
-              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-          }`}
-        >
-          {L.today}
-        </button>
-      </div>
-
-      {/* View toggle */}
-      <div className={`flex rounded-xl p-1 mb-5 ${darkMode ? 'bg-gray-700/60' : 'bg-gray-100'}`}>
-        {['eth', 'greg'].map(v => (
+    <div
+      className={`rounded-2xl border overflow-hidden shadow-lg transition-all duration-300 ${surface}`}
+      style={{ boxShadow: darkMode ? '0 1px 3px rgba(0,0,0,0.4),0 4px 20px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)' }}
+    >
+      <div className="p-5">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <h2 className={`text-sm font-semibold uppercase tracking-widest ${labelColor}`}>
+            {L.title}
+          </h2>
           <button
-            key={v}
-            onClick={() => setView(v)}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-              view === v
-                ? 'bg-green-500 text-white shadow-sm'
-                : darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
+            onClick={goToToday}
+            className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all duration-200 ${
+              darkMode
+                ? 'bg-white/[0.06] text-slate-300 hover:bg-white/[0.1] border border-white/[0.06]'
+                : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200'
             }`}
           >
-            {v === 'eth' ? L.ethView : L.gregView}
+            {L.today}
           </button>
-        ))}
-      </div>
-
-      {/* Navigation */}
-      <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={prevMonth}
-          className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg font-medium transition-colors ${
-            darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-600'
-          }`}
-        >
-          {L.prev}
-        </button>
-        <span
-          className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}
-          style={{ fontFamily: lang === 'am' ? "'Noto Sans Ethiopic', sans-serif" : 'inherit' }}
-        >
-          {headerLabel}
-        </span>
-        <button
-          onClick={nextMonth}
-          className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg font-medium transition-colors ${
-            darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-600'
-          }`}
-        >
-          {L.next}
-        </button>
-      </div>
-
-      {/* Grid */}
-      <div className="transition-all duration-200">
-        {view === 'eth' ? renderEthiopianGrid() : renderGregorianGrid()}
-      </div>
-
-      {/* Legend */}
-      <div className="flex gap-4 mt-4 pt-4 border-t border-dashed border-gray-200/50">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-green-500" />
-          <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Today</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-yellow-400" />
-          <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Holiday</span>
+
+        {/* View toggle */}
+        <div className="tab-pill mb-5">
+          {['eth', 'greg'].map(v => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={view === v ? 'active' : ''}
+            >
+              {v === 'eth' ? L.ethView : L.gregView}
+            </button>
+          ))}
+        </div>
+
+        {/* Month navigation */}
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={prevMonth} className={navBtn} aria-label="Previous month">
+            {L.prev}
+          </button>
+          <span
+            className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-slate-800'}`}
+            style={{ fontFamily: lang === 'am' ? "'Noto Sans Ethiopic', sans-serif" : 'inherit' }}
+          >
+            {headerLabel}
+          </span>
+          <button onClick={nextMonth} className={navBtn} aria-label="Next month">
+            {L.next}
+          </button>
+        </div>
+
+        {/* Grid */}
+        <div className="transition-all duration-200">
+          {view === 'eth' ? renderEthGrid() : renderGregGrid()}
+        </div>
+
+        {/* Legend */}
+        <div className={`flex gap-5 mt-4 pt-4 border-t ${darkMode ? 'border-white/[0.05]' : 'border-slate-100'}`}>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-sm bg-emerald-500" />
+            <span className={`text-xs ${labelColor}`}>{L.legendToday}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-sm bg-amber-400/70" />
+            <span className={`text-xs ${labelColor}`}>{L.legendHoliday}</span>
+          </div>
         </div>
       </div>
     </div>

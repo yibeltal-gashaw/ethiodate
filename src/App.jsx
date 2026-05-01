@@ -7,35 +7,48 @@ import HolidayPanel from './components/HolidayPanel';
 
 export default function App() {
   const [lang, setLang] = useState('en');
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true); // default dark
   const [activeTab, setActiveTab] = useState('today');
 
-  // Sync dark mode with document
+  /* Sync dark mode with document */
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
-    document.body.style.background = darkMode ? '#111827' : '#f8fafc';
+    document.documentElement.classList.toggle('light', !darkMode);
+    document.body.style.background = darkMode ? '#0f1117' : '#f8fafc';
   }, [darkMode]);
 
-  // Restore preferences
+  /* Restore preferences */
   useEffect(() => {
     const savedLang = localStorage.getItem('ethiodate-lang');
     const savedDark = localStorage.getItem('ethiodate-dark');
     if (savedLang) setLang(savedLang);
-    if (savedDark) setDarkMode(savedDark === 'true');
+    if (savedDark !== null) setDarkMode(savedDark === 'true');
   }, []);
 
   useEffect(() => {
     localStorage.setItem('ethiodate-lang', lang);
-    localStorage.setItem('ethiodate-dark', darkMode);
+    localStorage.setItem('ethiodate-dark', String(darkMode));
   }, [lang, darkMode]);
 
   const sharedProps = { lang, darkMode };
 
+  const pageBg = darkMode ? 'bg-[#0f1117] text-slate-100' : 'bg-slate-50 text-slate-900';
+  const sectionHeader = (title, subtitle) => (
+    <div className="mb-6">
+      <h1 className={`text-2xl sm:text-3xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+        {title}
+      </h1>
+      {subtitle && (
+        <p className={`mt-1 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+          {subtitle}
+        </p>
+      )}
+    </div>
+  );
+
   return (
     <div
-      className={`min-h-screen transition-colors duration-300 ${
-        darkMode ? 'bg-gray-900 text-white' : 'bg-slate-50 text-gray-900'
-      }`}
+      className={`min-h-screen transition-colors duration-300 ${pageBg}`}
       style={{ fontFamily: lang === 'am' ? "'Noto Sans Ethiopic', 'Inter', sans-serif" : "'Inter', sans-serif" }}
     >
       <Navbar
@@ -46,34 +59,42 @@ export default function App() {
         setActiveTab={setActiveTab}
       />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-24 sm:pb-10">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 pb-28 sm:pb-12">
 
         {/* ── HOME / TODAY ──────────────────────────────────────────────── */}
         {activeTab === 'today' && (
           <div className="space-y-6 animate-fadeIn">
-            {/* Hero greeting */}
-            <div className="text-center py-4">
-              <h1 className={`text-3xl sm:text-4xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            {/* Hero */}
+            <div className="py-2">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="eth-stripe w-8" style={{ height: '3px', borderRadius: '2px' }} />
+                <span className={`text-xs font-semibold uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                  {lang === 'am' ? 'የኢትዮጵያ ቀን አቆጣጠር' : 'Ethiopian Calendar'}
+                </span>
+              </div>
+              <h1
+                className={`text-3xl sm:text-4xl font-bold tracking-tight leading-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}
+              >
                 {lang === 'am' ? (
-                  <>ዛሬ ምን ቀን ነው? <span className="text-green-500">🇪🇹</span></>
+                  <>ዛሬ ምን ቀን ነው?</>
                 ) : (
-                  <>Ethiopian <span className="text-green-500">Date</span> & Calendar</>
+                  <>Ethiopian <span className="text-emerald-500">Date</span> &amp; Calendar</>
                 )}
               </h1>
-              <p className={`mt-2 text-sm sm:text-base ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <p className={`mt-2 text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                 {lang === 'am'
                   ? 'ቀን ቀይሩ፣ ቀን ይቁጠሩ፣ በዓላትን ይወቁ'
                   : 'Convert dates, explore the Ethiopian calendar, and discover holidays'}
               </p>
             </div>
 
-            {/* Today + Converter side by side on large screens */}
+            {/* Today + Converter */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <TodayWidget {...sharedProps} />
               <DateConverter {...sharedProps} />
             </div>
 
-            {/* Upcoming holidays preview */}
+            {/* Holidays */}
             <HolidayPanel {...sharedProps} />
           </div>
         )}
@@ -81,28 +102,22 @@ export default function App() {
         {/* ── CONVERTER ────────────────────────────────────────────────── */}
         {activeTab === 'converter' && (
           <div className="max-w-xl mx-auto animate-fadeIn">
-            <div className="text-center py-4 mb-4">
-              <h1 className={`text-2xl sm:text-3xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {lang === 'am' ? 'ቀን ቀያሪ' : 'Date Converter'}
-              </h1>
-              <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {lang === 'am'
-                  ? 'ጎርጎሮሲያን ↔ ኢትዮጵያ ቀን'
-                  : 'Gregorian ↔ Ethiopian calendar'}
-              </p>
-            </div>
+            {sectionHeader(
+              lang === 'am' ? 'ቀን ቀያሪ' : 'Date Converter',
+              lang === 'am' ? 'ጎርጎሮሲያን ↔ ኢትዮጵያ ቀን' : 'Convert between Gregorian and Ethiopian calendars'
+            )}
             <DateConverter {...sharedProps} />
-
-            {/* Quick info */}
-            <div className={`mt-5 rounded-xl p-4 text-sm ${
-              darkMode ? 'bg-gray-800/50 border border-gray-700/50 text-gray-300' : 'bg-blue-50 border border-blue-100 text-blue-700'
+            <div className={`mt-5 rounded-xl px-4 py-3 border text-sm ${
+              darkMode
+                ? 'bg-blue-500/[0.06] border-blue-500/20 text-blue-300'
+                : 'bg-blue-50 border-blue-100 text-blue-700'
             }`}>
-              <p className="font-medium mb-1">
-                {lang === 'am' ? '💡 ስለ ቀን አቆጣጠሩ' : '💡 About the Ethiopian Calendar'}
+              <p className="font-semibold mb-1 text-xs uppercase tracking-wider opacity-70">
+                {lang === 'am' ? 'ስለ ቀን አቆጣጠሩ' : 'About the Ethiopian Calendar'}
               </p>
-              <p className={darkMode ? 'text-gray-400' : 'text-blue-600'}>
+              <p className={`text-xs leading-relaxed ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
                 {lang === 'am'
-                  ? 'የኢትዮጵያ ቀን አቆጣጠር ከጎርጎሮሲያን ቀን አቆጣጠር 7–8 ዓመት ወደ ኋላ ይቀራል። 12 ወር ሲኖሩት እያንዳንዳቸው 30 ቀናት አሏቸው ፣ ፣ 13ኛው ወር ፓጉሜ ደግሞ 5 ወይም 6 ቀናት ይኖሩታል።'
+                  ? 'የኢትዮጵያ ቀን አቆጣጠር ከጎርጎሮሲያን ቀን አቆጣጠር 7–8 ዓመት ወደ ኋላ ይቀራል። 12 ወር ሲኖሩት እያንዳንዳቸው 30 ቀናት አሏቸው፣ 13ኛው ወር ፓጉሜ ደግሞ 5 ወይም 6 ቀናት ይኖሩታል።'
                   : 'The Ethiopian calendar is 7–8 years behind the Gregorian calendar. It has 12 months of 30 days each, plus a 13th month called Pagume with 5 or 6 days.'}
               </p>
             </div>
@@ -112,14 +127,10 @@ export default function App() {
         {/* ── CALENDAR ────────────────────────────────────────────────── */}
         {activeTab === 'calendar' && (
           <div className="max-w-lg mx-auto animate-fadeIn">
-            <div className="text-center py-4 mb-4">
-              <h1 className={`text-2xl sm:text-3xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {lang === 'am' ? 'ቀን መቁጠሪያ' : 'Calendar'}
-              </h1>
-              <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {lang === 'am' ? 'ኢትዮጵያ ወይም ጎርጎሮሲያን ቀን ይምረጡ' : 'Switch between Ethiopian and Gregorian views'}
-              </p>
-            </div>
+            {sectionHeader(
+              lang === 'am' ? 'ቀን መቁጠሪያ' : 'Calendar',
+              lang === 'am' ? 'ኢትዮጵያ ወይም ጎርጎሮሲያን ቀን ይምረጡ' : 'Switch between Ethiopian and Gregorian views'
+            )}
             <CalendarView {...sharedProps} />
           </div>
         )}
@@ -127,26 +138,24 @@ export default function App() {
         {/* ── HOLIDAYS ────────────────────────────────────────────────── */}
         {activeTab === 'holidays' && (
           <div className="max-w-xl mx-auto animate-fadeIn">
-            <div className="text-center py-4 mb-4">
-              <h1 className={`text-2xl sm:text-3xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {lang === 'am' ? 'የኢትዮጵያ በዓላት' : 'Ethiopian Holidays'}
-              </h1>
-              <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {lang === 'am'
-                  ? 'ቀጣይ ብሔራዊ እና ሃይማኖታዊ በዓላት'
-                  : 'Upcoming national and religious holidays'}
-              </p>
-            </div>
+            {sectionHeader(
+              lang === 'am' ? 'የኢትዮጵያ በዓላት' : 'Ethiopian Holidays',
+              lang === 'am' ? 'ቀጣይ ብሔራዊ እና ሃይማኖታዊ በዓላት' : 'Upcoming national and religious holidays'
+            )}
             <HolidayPanel {...sharedProps} />
           </div>
         )}
       </main>
 
       {/* Footer */}
-      <footer className={`text-center py-4 text-xs border-t hidden sm:block transition-colors duration-300 ${
-        darkMode ? 'text-gray-600 border-gray-800' : 'text-gray-400 border-gray-100'
+      <footer className={`hidden sm:block text-center py-5 text-xs border-t transition-colors duration-300 ${
+        darkMode ? 'text-slate-600 border-white/[0.05]' : 'text-slate-400 border-slate-100'
       }`}>
-        EthioDate &mdash; {lang === 'am' ? 'ቀን ቀያሪ' : 'Ethiopian Calendar Converter'} &mdash; {new Date().getFullYear()}
+        <div className="flex items-center justify-center gap-2">
+          <div className="eth-stripe w-6" style={{ height: '2px', borderRadius: '1px' }} />
+          <span>EthioDate &mdash; {lang === 'am' ? 'ቀን ቀያሪ' : 'Ethiopian Calendar Converter'} &mdash; {new Date().getFullYear()}</span>
+          <div className="eth-stripe w-6" style={{ height: '2px', borderRadius: '1px' }} />
+        </div>
       </footer>
     </div>
   );

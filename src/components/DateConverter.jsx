@@ -13,43 +13,73 @@ import {
 const LABELS = {
   en: {
     title: 'Date Converter',
-    subtitle: 'Convert between Gregorian and Ethiopian calendars',
+    subtitle: 'Gregorian ↔ Ethiopian',
     gToE: 'Gregorian → Ethiopian',
     eToG: 'Ethiopian → Gregorian',
     gregDate: 'Gregorian Date',
-    ethDate: 'Ethiopian Date',
-    ethYear: 'Ethiopian Year',
+    ethYear: 'Year (E.C.)',
     ethMonth: 'Month',
     ethDay: 'Day',
-    result: 'Result',
+    result: 'Converted Date',
     copy: 'Copy',
-    copied: 'Copied!',
-    holiday: '🎉 Holiday',
+    copied: 'Copied',
+    holiday: 'Holiday',
     dayName: 'Day',
-    swap: 'Swap',
   },
   am: {
     title: 'ቀን ቀያሪ',
-    subtitle: 'በጎርጎሮስያዊ እና በኢትዮጵያ ቀን አቆጣጠር መካከል ይቀይሩ',
+    subtitle: 'ጎርጎሮስ ↔ ኢትዮጵያ',
     gToE: 'ጎርጎሮስ → ኢትዮጵያ',
     eToG: 'ኢትዮጵያ → ጎርጎሮስ',
     gregDate: 'ጎርጎሮስያዊ ቀን',
-    ethDate: 'ኢትዮጵያ ቀን',
-    ethYear: 'ዓመተ ምሕረት',
+    ethYear: 'ዓ.ም',
     ethMonth: 'ወር',
     ethDay: 'ቀን',
     result: 'ውጤት',
     copy: 'ቅዳ',
-    copied: 'ተቀድቷል!',
-    holiday: '🎉 በዓል',
+    copied: 'ተቀድቷል',
+    holiday: 'በዓል',
     dayName: 'ቀን',
-    swap: 'ቀይር',
   },
 };
 
+function CopyIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  );
+}
+
+function ArrowDownIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19"/>
+      <polyline points="19 12 12 19 5 12"/>
+    </svg>
+  );
+}
+
+function ChevronDown({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  );
+}
+
 export default function DateConverter({ lang = 'en', darkMode = false }) {
   const L = LABELS[lang];
-  const [mode, setMode] = useState('gToE'); // 'gToE' | 'eToG'
+  const [mode, setMode] = useState('gToE');
   const [gregInput, setGregInput] = useState('');
   const [ethYear, setEthYear] = useState('');
   const [ethMonth, setEthMonth] = useState('1');
@@ -57,7 +87,6 @@ export default function DateConverter({ lang = 'en', darkMode = false }) {
   const [result, setResult] = useState(null);
   const [copied, setCopied] = useState(false);
 
-  // Initialize with today
   useEffect(() => {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -66,7 +95,6 @@ export default function DateConverter({ lang = 'en', darkMode = false }) {
     setGregInput(`${yyyy}-${mm}-${dd}`);
   }, []);
 
-  // Auto-convert when inputs change
   useEffect(() => {
     if (mode === 'gToE' && gregInput) {
       const parts = gregInput.split('-');
@@ -117,141 +145,151 @@ export default function DateConverter({ lang = 'en', darkMode = false }) {
 
   const months = lang === 'am' ? ET_MONTHS_AM : ET_MONTHS_EN;
 
-  const cardBg = darkMode
-    ? 'bg-gray-800/60 border-gray-700/50'
-    : 'bg-white/80 border-gray-200/60';
-  const inputCls = darkMode
-    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-green-400'
-    : 'bg-gray-50 border-gray-200 text-gray-800 focus:border-green-500';
-  const labelCls = darkMode ? 'text-gray-300' : 'text-gray-600';
-  const tabActive = 'bg-green-500 text-white shadow-sm shadow-green-200/50';
-  const tabInactive = darkMode
-    ? 'text-gray-400 hover:text-gray-200'
-    : 'text-gray-500 hover:text-gray-700';
+  const surface = darkMode ? 'bg-[#181c27] border-white/[0.07]' : 'bg-white border-black/[0.06]';
+  const inner = darkMode ? 'bg-white/[0.04] border-white/[0.06]' : 'bg-slate-50 border-black/[0.05]';
+  const labelColor = darkMode ? 'text-slate-400' : 'text-slate-500';
+  const inputCls = `input-base ${darkMode ? 'bg-white/[0.05] border-white/[0.08] text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`;
 
   return (
-    <div className={`rounded-2xl border backdrop-blur-sm p-6 shadow-sm ${cardBg} transition-all duration-300`}>
-      {/* Header */}
-      <div className="mb-5">
-        <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-          {L.title}
-        </h2>
-        <p className={`text-sm mt-1 ${labelCls}`}>{L.subtitle}</p>
-      </div>
+    <div
+      className={`rounded-2xl border overflow-hidden shadow-lg transition-all duration-300 ${surface}`}
+      style={{ boxShadow: darkMode ? '0 1px 3px rgba(0,0,0,0.4),0 4px 20px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)' }}
+    >
+      <div className="p-5">
+        {/* Header */}
+        <div className="mb-5">
+          <h2 className={`text-sm font-semibold uppercase tracking-widest ${labelColor}`}>
+            {L.title}
+          </h2>
+          <p className={`text-xs mt-0.5 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+            {L.subtitle}
+          </p>
+        </div>
 
-      {/* Mode toggle tabs */}
-      <div className={`flex rounded-xl p-1 mb-5 ${darkMode ? 'bg-gray-700/60' : 'bg-gray-100'}`}>
-        {['gToE', 'eToG'].map(m => (
-          <button
-            key={m}
-            onClick={() => setMode(m)}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-              mode === m ? tabActive : tabInactive
-            }`}
-          >
-            {m === 'gToE' ? L.gToE : L.eToG}
-          </button>
-        ))}
-      </div>
+        {/* Mode toggle */}
+        <div className="tab-pill mb-5">
+          {['gToE', 'eToG'].map(m => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={mode === m ? 'active' : ''}
+              style={{ fontFamily: lang === 'am' ? "'Noto Sans Ethiopic', sans-serif" : 'inherit' }}
+            >
+              {m === 'gToE' ? L.gToE : L.eToG}
+            </button>
+          ))}
+        </div>
 
-      {/* Input Section */}
-      <div className="space-y-4">
-        {mode === 'gToE' ? (
-          <div>
-            <label className={`block text-xs font-medium mb-1.5 ${labelCls}`}>
-              {L.gregDate}
-            </label>
-            <input
-              type="date"
-              value={gregInput}
-              onChange={e => setGregInput(e.target.value)}
-              className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors duration-200 ${inputCls}`}
-            />
+        {/* Input */}
+        <div className="space-y-3">
+          {mode === 'gToE' ? (
+            <div>
+              <label className={`block text-xs font-medium mb-1.5 ${labelColor}`}>{L.gregDate}</label>
+              <input
+                type="date"
+                value={gregInput}
+                onChange={e => setGregInput(e.target.value)}
+                className={inputCls}
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className={`block text-xs font-medium mb-1.5 ${labelColor}`}>{L.ethYear}</label>
+                <input
+                  type="number"
+                  placeholder="2016"
+                  value={ethYear}
+                  onChange={e => setEthYear(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label className={`block text-xs font-medium mb-1.5 ${labelColor}`}>{L.ethMonth}</label>
+                <div className="relative">
+                  <select
+                    value={ethMonth}
+                    onChange={e => setEthMonth(e.target.value)}
+                    className={`${inputCls} pr-8`}
+                  >
+                    {months.map((mn, i) => (
+                      <option key={i} value={i + 1}>{mn}</option>
+                    ))}
+                  </select>
+                  <div className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${labelColor}`}>
+                    <ChevronDown />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className={`block text-xs font-medium mb-1.5 ${labelColor}`}>{L.ethDay}</label>
+                <input
+                  type="number"
+                  placeholder="1"
+                  min="1"
+                  max="30"
+                  value={ethDay}
+                  onChange={e => setEthDay(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Arrow divider */}
+        {result && (
+          <div className={`flex justify-center my-4 ${labelColor}`}>
+            <ArrowDownIcon />
           </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className={`block text-xs font-medium mb-1.5 ${labelCls}`}>{L.ethYear}</label>
-              <input
-                type="number"
-                placeholder="2016"
-                value={ethYear}
-                onChange={e => setEthYear(e.target.value)}
-                className={`w-full rounded-xl border px-3 py-3 text-sm outline-none transition-colors duration-200 ${inputCls}`}
-              />
-            </div>
-            <div>
-              <label className={`block text-xs font-medium mb-1.5 ${labelCls}`}>{L.ethMonth}</label>
-              <select
-                value={ethMonth}
-                onChange={e => setEthMonth(e.target.value)}
-                className={`w-full rounded-xl border px-3 py-3 text-sm outline-none transition-colors duration-200 ${inputCls}`}
+        )}
+
+        {/* Result */}
+        {result && (
+          <div className={`rounded-xl border p-4 transition-all duration-300 ${
+            darkMode
+              ? 'bg-emerald-500/[0.08] border-emerald-500/20'
+              : 'bg-emerald-50 border-emerald-100'
+          }`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className={`text-[10px] font-semibold uppercase tracking-widest mb-1.5 ${
+                  darkMode ? 'text-emerald-400' : 'text-emerald-600'
+                }`}>
+                  {L.result}
+                </p>
+                <p className={`font-bold text-lg leading-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                  {result.label}
+                </p>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  <span className={`badge`}>
+                    {result.dayName}
+                  </span>
+                  {result.holiday && (
+                    <span className={`badge ${darkMode ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
+                      {L.holiday}: {result.holiday}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={handleCopy}
+                title={L.copy}
+                className={`shrink-0 flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  copied
+                    ? 'bg-emerald-500 text-white'
+                    : darkMode
+                      ? 'bg-white/[0.08] text-slate-300 hover:bg-white/[0.12]'
+                      : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-200'
+                }`}
               >
-                {months.map((mn, i) => (
-                  <option key={i} value={i + 1}>{mn}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className={`block text-xs font-medium mb-1.5 ${labelCls}`}>{L.ethDay}</label>
-              <input
-                type="number"
-                placeholder="1"
-                min="1"
-                max="30"
-                value={ethDay}
-                onChange={e => setEthDay(e.target.value)}
-                className={`w-full rounded-xl border px-3 py-3 text-sm outline-none transition-colors duration-200 ${inputCls}`}
-              />
+                {copied ? <CheckIcon /> : <CopyIcon />}
+                {copied ? L.copied : L.copy}
+              </button>
             </div>
           </div>
         )}
       </div>
-
-      {/* Result */}
-      {result && (
-        <div className={`mt-5 rounded-xl p-4 transition-all duration-300 ${
-          darkMode
-            ? 'bg-green-900/20 border border-green-700/40'
-            : 'bg-green-50 border border-green-100'
-        }`}>
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <p className={`text-xs font-medium mb-1 ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
-                {L.result}
-              </p>
-              <p className={`font-semibold text-base leading-tight ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-                {result.label}
-              </p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
-                  darkMode ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-500'
-                }`}>
-                  📅 {result.dayName}
-                </span>
-                {result.holiday && (
-                  <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
-                    darkMode ? 'bg-yellow-900/40 text-yellow-300' : 'bg-yellow-50 text-yellow-700'
-                  }`}>
-                    {L.holiday}: {result.holiday}
-                  </span>
-                )}
-              </div>
-            </div>
-            <button
-              onClick={handleCopy}
-              title={L.copy}
-              className={`shrink-0 text-xs px-3 py-1.5 rounded-lg font-medium transition-all duration-200 ${
-                copied
-                  ? darkMode ? 'bg-green-700 text-white' : 'bg-green-500 text-white'
-                  : darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200'
-              }`}
-            >
-              {copied ? L.copied : L.copy}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
