@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'motion/react';
+import BorderGlow from '../components/BorderGlow';
 import {
   gregorianToEthiopian,
   ethiopianToGregorian,
@@ -226,38 +228,48 @@ export default function HomePage({ lang, darkMode, setActiveTab }) {
                   key={h.key + i}
                   to={`/holidays/${h.key}`}
                   className="holiday-card"
-                  style={{ background: darkMode ? 'rgba(255,255,255,0.04)' : theme.bg, border: `1px solid ${darkMode ? '#1e293b' : 'transparent'}` }}
+                  style={{ padding: 0, border: 'none', background: 'transparent' }}
                 >
-                  {/* Icon */}
-                  <div
-                    className="holiday-card-icon"
-                    style={{ background: darkMode ? 'rgba(255,255,255,0.08)' : theme.badge }}
+                  <BorderGlow
+                    backgroundColor={darkMode ? '#1e293b' : theme.bg}
+                    borderRadius={14}
+                    glowColor="136 100 78"
+                    colors={['#16a34a', '#eab308', '#ef4444']}
+                    style={{ height: '100%', width: '100%', border: `1px solid ${darkMode ? '#1e293b' : 'transparent'}` }}
                   >
-                    <span style={{ fontSize: 20 }}>{icon}</span>
-                  </div>
+                    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', height: '100%' }}>
+                      {/* Icon */}
+                      <div
+                        className="holiday-card-icon"
+                        style={{ background: darkMode ? 'rgba(255,255,255,0.08)' : theme.badge }}
+                      >
+                        <span style={{ fontSize: 20 }}>{icon}</span>
+                      </div>
 
-                  {/* Name */}
-                  <div style={{ marginTop: 10, marginBottom: 2 }}>
-                    <div
-                      style={{
-                        color: textPrimary, fontWeight: 600, fontSize: 13, lineHeight: 1.3,
-                        fontFamily: lang === 'am' ? "'Noto Sans Ethiopic',sans-serif" : 'inherit',
-                      }}
-                    >
-                      {lang === 'am' ? h.nameAm : h.nameEn}
-                    </div>
-                    <div style={{ color: textSecondary, fontSize: 11, marginTop: 4 }}>
-                      {etMonth} {h.day}
-                      {h.gDate && (
-                        <span>, {h.gDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                      )}
-                    </div>
-                  </div>
+                      {/* Name */}
+                      <div style={{ marginTop: 10, marginBottom: 2, flex: 1 }}>
+                        <div
+                          style={{
+                            color: textPrimary, fontWeight: 600, fontSize: 13, lineHeight: 1.3,
+                            fontFamily: lang === 'am' ? "'Noto Sans Ethiopic',sans-serif" : 'inherit',
+                          }}
+                        >
+                          {lang === 'am' ? h.nameAm : h.nameEn}
+                        </div>
+                        <div style={{ color: textSecondary, fontSize: 11, marginTop: 4 }}>
+                          {etMonth} {h.day}
+                          {h.gDate && (
+                            <span>, {h.gDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                          )}
+                        </div>
+                      </div>
 
-                  {/* Days away */}
-                  <div style={{ marginTop: 8, color: theme.daysColor, fontSize: 11, fontWeight: 700, letterSpacing: '0.04em' }}>
-                    {days}
-                  </div>
+                      {/* Days away */}
+                      <div style={{ marginTop: 8, color: theme.daysColor, fontSize: 11, fontWeight: 700, letterSpacing: '0.04em' }}>
+                        {days}
+                      </div>
+                    </div>
+                  </BorderGlow>
                 </Link>
               );
             })}
@@ -269,47 +281,81 @@ export default function HomePage({ lang, darkMode, setActiveTab }) {
           <h2 style={{ color: textPrimary, fontWeight: 700, fontSize: 18, marginBottom: 16 }}>
             {lang === 'am' ? 'ስለዚህ ያውቃሉ?' : 'Do You Know About This?'}
           </h2>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          <div className="hide-scrollbar" style={{
+            display: 'flex',
+            flexWrap: 'nowrap',
+            overflowX: 'auto',
             gap: 16,
+            paddingBottom: 24,
+            paddingTop: 8,
+            scrollbarWidth: 'none',
           }}>
             {[
-              { icon: '🗓️', en: 'Ethiopia has 13 months', am: 'ኢትዮጵያ 13 ወራት አሏት', bg: '#eff6ff', darkBg: 'rgba(59,130,246,0.1)' },
-              { icon: '📅', en: 'Ethiopia has its own calendar', am: 'ኢትዮጵያ የራሷ የቀን አቆጣጠር አላት', bg: '#dcfce7', darkBg: 'rgba(22,163,74,0.1)' },
-              { icon: '☕', en: 'Ethiopia is the birthplace of coffee', am: 'ኢትዮጵያ የቡና መገኛ ናት', bg: '#fef9c3', darkBg: 'rgba(161,98,7,0.1)' },
-              { icon: '🛡️', en: 'Ethiopia was never colonized', am: 'ኢትዮጵያ መቼም በቅኝ አልተገዛችም', bg: '#fee2e2', darkBg: 'rgba(220,38,38,0.1)' },
-              { icon: '🔤', en: 'Ethiopia has its own alphabets', am: 'ኢትዮጵያ የራሷ ፊደል አላት', bg: '#f3e8ff', darkBg: 'rgba(147,51,234,0.1)' },
-            ].map((fact, idx) => (
-              <div key={idx} style={{
-                background: card,
-                border: `1px solid ${border}`,
-                borderRadius: 16,
-                padding: 20,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 12,
-                boxShadow: darkMode ? '0 4px 6px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.05)',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                cursor: 'default',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = darkMode ? '0 6px 12px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.08)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = darkMode ? '0 4px 6px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.05)'; }}
+              { icon: '🗓️', en: 'Ethiopia has 13 months', am: 'ኢትዮጵያ 13 ወራት አሏት', enDesc: 'The calendar consists of 12 months of 30 days each, plus a 13th month of 5 or 6 days.', amDesc: 'የኢትዮጵያ የቀን አቆጣጠር 30 ቀናት ያሉዋቸው 12 ወራት እና 5 ወይም 6 ቀናት ያላት 13ኛ ወር (ጳጉሜ) አለው።', bg: '#eff6ff', darkBg: 'rgba(59,130,246,0.1)' },
+              { icon: '📅', en: 'Ethiopia has its own calendar', am: 'ኢትዮጵያ የራሷ የቀን አቆጣጠር አላት', enDesc: 'It is approximately seven to eight years behind the standard Gregorian calendar.', amDesc: 'የኢትዮጵያ የቀን አቆጣጠር ከጎርጎሮሳውያን የቀን አቆጣጠር ከ7 እስከ 8 ዓመታት ወደ ኋላ ይለማል።', bg: '#dcfce7', darkBg: 'rgba(22,163,74,0.1)' },
+              { icon: '☕', en: 'Ethiopia is the birthplace of coffee', am: 'ኢትዮጵያ የቡና መገኛ ናት', enDesc: 'Coffee Arabica was first discovered natively growing in the Kaffa region.', amDesc: 'የአረቢካ ቡና ለመጀመሪያ ጊዜ የተገኘው በኢትዮጵያ ካፋ ክፍለ ሀገር ነው።', bg: '#fef9c3', darkBg: 'rgba(161,98,7,0.1)' },
+              { icon: '🛡️', en: 'Ethiopia was never colonized', am: 'ኢትዮጵያ መቼም በቅኝ አልተገዛችም', enDesc: 'It is the only African nation to defeat a European colonial power and remain independent.', amDesc: 'ኢትዮጵያ ከአፍሪካ ሀገራት በአውሮፓውያን ቅኝ ግዛት ስር ያልወደቀች ብቸኛዋ ሀገር ናት።', bg: '#fee2e2', darkBg: 'rgba(220,38,38,0.1)' },
+              { icon: '🔤', en: 'Ethiopia has its own alphabets', am: 'ኢትዮጵያ የራሷ ፊደል አላት', enDesc: 'The Ge\'ez script is one of the oldest indigenous African scripts still in active use today.', amDesc: 'የግዕዝ ፊደል እስከ አሁን ድረስ በጥቅም ላይ የሚውል ብቸኛው አፍሪካዊ የጽሕፈት ስልት ነው።', bg: '#f3e8ff', darkBg: 'rgba(147,51,234,0.1)' },
+            ].map((fact, idx) => {
+              const tiltAngle = idx % 2 === 0 ? 3 : -3;
+              return (
+              <motion.div 
+                key={idx} 
+                whileHover={{ 
+                  scale: 1.05, 
+                  rotate: tiltAngle,
+                  y: -5,
+                  boxShadow: darkMode ? '0 10px 30px rgba(0,0,0,0.3)' : '0 10px 30px rgba(0,0,0,0.1)'
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                style={{
+                  borderRadius: 16,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  boxShadow: darkMode ? '0 4px 6px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.05)',
+                  cursor: 'default',
+                  transformOrigin: 'center center',
+                  flex: '1 0 200px',
+                  minHeight: 180,
+                  position: 'relative',
+                }}
               >
-                <div style={{
-                  width: 44, height: 44,
-                  borderRadius: 12,
-                  background: darkMode ? fact.darkBg : fact.bg,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 22
-                }}>
-                  {fact.icon}
-                </div>
-                <div style={{ color: textPrimary, fontWeight: 600, fontSize: 15, lineHeight: 1.4 }}>
-                  {lang === 'am' ? fact.am : fact.en}
-                </div>
-              </div>
-            ))}
+                <BorderGlow
+                  backgroundColor={card}
+                  borderRadius={16}
+                  glowColor="136 100 78"
+                  colors={['#16a34a', '#eab308', '#ef4444']}
+                  style={{ flex: 1, display: 'flex' }}
+                >
+                  <div style={{
+                    padding: 24,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 16,
+                    height: '100%',
+                    boxSizing: 'border-box'
+                  }}>
+                    <div style={{
+                      width: 44, height: 44,
+                      borderRadius: 12,
+                      background: darkMode ? fact.darkBg : fact.bg,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 22
+                    }}>
+                      {fact.icon}
+                    </div>
+                    <div>
+                      <div style={{ color: textPrimary, fontWeight: 700, fontSize: 15, lineHeight: 1.4, marginBottom: 6 }}>
+                        {lang === 'am' ? fact.am : fact.en}
+                      </div>
+                      <div style={{ color: textSecondary, fontSize: 13, lineHeight: 1.5 }}>
+                        {lang === 'am' ? fact.amDesc : fact.enDesc}
+                      </div>
+                    </div>
+                  </div>
+                </BorderGlow>
+              </motion.div>
+            );})}
           </div>
         </div>
 

@@ -3,15 +3,26 @@ import { createContext, useContext, useState, useEffect } from 'react';
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
-  const [lang, setLang] = useState('en');
-  const [darkMode, setDarkMode] = useState(false);
-
-  // Restore from localStorage
-  useEffect(() => {
-    const savedLang = localStorage.getItem('ethiodate-lang');
+  const [lang, setLang] = useState(() => localStorage.getItem('ethiodate-lang') || 'en');
+  const [darkMode, setDarkMode] = useState(() => {
     const savedDark = localStorage.getItem('ethiodate-dark');
-    if (savedLang) setLang(savedLang);
-    if (savedDark) setDarkMode(savedDark === 'true');
+    if (savedDark !== null) {
+      return savedDark === 'true';
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  // Listen for system theme changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => {
+      // Only auto-switch if user hasn't explicitly set a preference
+      if (localStorage.getItem('ethiodate-dark') === null) {
+        setDarkMode(e.matches);
+      }
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   // Persist + sync dark class
