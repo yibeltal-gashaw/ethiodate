@@ -24,25 +24,7 @@ const HOLIDAY_COLORS = [
   { bg: '#fefce8', icon: '#eab308', badge: '#fef9c3', text: '#a16207', daysColor: '#ca8a04' },
 ];
 
-// ── Fake schedule items (would be real events in a full app) ─────────────────
-const SCHEDULE_ITEMS = [
-  { dayEn: 'Mon', dayAm: 'ሰኞ', date: 14, title: 'Project Deadline', titleAm: 'የፕሮጀክት ጊዜ መጨረሻ', time: '10:00 AM – 11:30 AM' },
-  { dayEn: 'Wed', dayAm: 'ረቡዕ', date: 16, title: 'Community Gathering', titleAm: 'የማህበረሰብ ስብሰባ', time: '02:00 PM – 04:00 PM' },
-  { dayEn: 'Sun', dayAm: 'እሁድ', date: 20, title: 'Monthly Review',  titleAm: 'ወርሃዊ ግምገማ', time: '09:00 AM – 10:00 AM' },
-];
 
-const DID_YOU_KNOW = {
-  en: {
-    label: 'DID YOU KNOW?',
-    title: 'The 13th Month',
-    body: "Ethiopia is the only country in the world that has a 13th month called 'Pagumé', which has five or six days depending on if it's a leap year.",
-  },
-  am: {
-    label: 'ያውቃሉ?',
-    title: '13ኛው ወር',
-    body: "ኢትዮጵያ ዓለም ላይ ብቸኛዋ ሀገር ናት \"ጳጉሜ\" የምትባል 13ኛ ወር ያላት – ሊፕ ዓመት ከሆነ 6፣ ካልሆነ 5 ቀናት አሏት።",
-  },
-};
 
 // ── Quick Converter (minimal inline) ────────────────────────────────────────
 function QuickConverter({ lang, darkMode }) {
@@ -149,9 +131,6 @@ export default function HomePage({ lang, darkMode, setActiveTab }) {
     if (diff === 1) return lang === 'am' ? 'ነገ' : 'TOMORROW';
     return lang === 'am' ? `በ ${diff} ቀን` : `IN ${diff} DAYS`;
   };
-
-  const DYK = DID_YOU_KNOW[lang];
-  const currentMonthEn = ET_MONTHS_EN[ethDate.month - 1];
 
   return (
     <div className="dashboard-body" style={{ background: bg, minHeight: '100vh', overflow: 'auto' }}>
@@ -285,73 +264,52 @@ export default function HomePage({ lang, darkMode, setActiveTab }) {
           </div>
         </div>
 
-        {/* ── Schedule + Did You Know ── */}
-        <div className="dashboard-row dashboard-row-bottom">
-          {/* Schedule */}
-          <div className="dashboard-section" style={{ background: card, border: `1px solid ${border}`, flex: '1 1 0' }}>
-            <h2 style={{ color: textPrimary, fontWeight: 700, fontSize: 17, marginBottom: 16 }}>
-              {currentMonthEn} {lang === 'am' ? 'ፕሮግራም' : 'Schedule'}
-            </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {SCHEDULE_ITEMS.map((item, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 14,
-                    padding: '12px 0',
-                    borderBottom: i < SCHEDULE_ITEMS.length - 1 ? `1px solid ${divider}` : 'none',
-                  }}
-                >
-                  {/* Day block */}
-                  <div style={{ minWidth: 40, textAlign: 'center' }}>
-                    <div style={{ color: textSecondary, fontSize: 10, fontWeight: 600, textTransform: 'uppercase' }}>
-                      {lang === 'am' ? item.dayAm : item.dayEn}
-                    </div>
-                    <div style={{ color: textPrimary, fontSize: 22, fontWeight: 800, lineHeight: 1.1 }}>
-                      {item.date}
-                    </div>
-                  </div>
-                  {/* Details */}
-                  <div style={{ flex: 1, background: darkMode ? 'rgba(255,255,255,0.04)' : '#f9fafb', borderRadius: 10, padding: '10px 14px' }}>
-                    <div style={{ color: textPrimary, fontWeight: 600, fontSize: 14 }}>
-                      {lang === 'am' ? item.titleAm : item.title}
-                    </div>
-                    <div style={{ color: textSecondary, fontSize: 12, marginTop: 2 }}>{item.time}</div>
-                  </div>
+        {/* ── Do You Know About This ── */}
+        <div style={{ marginTop: 32, marginBottom: 32 }}>
+          <h2 style={{ color: textPrimary, fontWeight: 700, fontSize: 18, marginBottom: 16 }}>
+            {lang === 'am' ? 'ስለዚህ ያውቃሉ?' : 'Do You Know About This?'}
+          </h2>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: 16,
+          }}>
+            {[
+              { icon: '🗓️', en: 'Ethiopia has 13 months', am: 'ኢትዮጵያ 13 ወራት አሏት', bg: '#eff6ff', darkBg: 'rgba(59,130,246,0.1)' },
+              { icon: '📅', en: 'Ethiopia has its own calendar', am: 'ኢትዮጵያ የራሷ የቀን አቆጣጠር አላት', bg: '#dcfce7', darkBg: 'rgba(22,163,74,0.1)' },
+              { icon: '☕', en: 'Ethiopia is the birthplace of coffee', am: 'ኢትዮጵያ የቡና መገኛ ናት', bg: '#fef9c3', darkBg: 'rgba(161,98,7,0.1)' },
+              { icon: '🛡️', en: 'Ethiopia was never colonized', am: 'ኢትዮጵያ መቼም በቅኝ አልተገዛችም', bg: '#fee2e2', darkBg: 'rgba(220,38,38,0.1)' },
+              { icon: '🔤', en: 'Ethiopia has its own alphabets', am: 'ኢትዮጵያ የራሷ ፊደል አላት', bg: '#f3e8ff', darkBg: 'rgba(147,51,234,0.1)' },
+            ].map((fact, idx) => (
+              <div key={idx} style={{
+                background: card,
+                border: `1px solid ${border}`,
+                borderRadius: 16,
+                padding: 20,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+                boxShadow: darkMode ? '0 4px 6px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.05)',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                cursor: 'default',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = darkMode ? '0 6px 12px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.08)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = darkMode ? '0 4px 6px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.05)'; }}
+              >
+                <div style={{
+                  width: 44, height: 44,
+                  borderRadius: 12,
+                  background: darkMode ? fact.darkBg : fact.bg,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 22
+                }}>
+                  {fact.icon}
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Did You Know */}
-          <div className="dashboard-dyk">
-            {/* Ethiopian themed image overlay */}
-            <div className="dyk-image">
-              <div className="dyk-overlay" />
-              <div className="dyk-content">
-                <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', marginBottom: 6 }}>
-                  {DYK.label}
-                </div>
-                <div style={{ color: '#fff', fontSize: 22, fontWeight: 800, lineHeight: 1.2, marginBottom: 10 }}>
-                  {DYK.title}
-                </div>
-                <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, lineHeight: 1.6 }}>
-                  {DYK.body}
+                <div style={{ color: textPrimary, fontWeight: 600, fontSize: 15, lineHeight: 1.4 }}>
+                  {lang === 'am' ? fact.am : fact.en}
                 </div>
               </div>
-
-              {/* Plus button */}
-              <div style={{
-                position: 'absolute', top: 12, right: 12,
-                width: 32, height: 32, borderRadius: '50%',
-                background: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
-                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 

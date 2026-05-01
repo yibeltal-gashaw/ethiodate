@@ -115,31 +115,7 @@ export default function Sidebar({ lang, darkMode, activeTab, setActiveTab }) {
         })}
       </nav>
 
-      {/* User profile at bottom */}
-      <div
-        className="sidebar-user"
-        style={{
-          borderTop: darkMode ? '1px solid #1f2937' : '1px solid #f0f0f0',
-        }}
-      >
-        <div className="sidebar-avatar">
-          <span style={{ fontSize: 16 }}>🧑🏾</span>
-        </div>
-        <div className="sidebar-user-info">
-          <span
-            className="sidebar-user-name"
-            style={{ color: darkMode ? '#f9fafb' : '#111827' }}
-          >
-            Abebe B.
-          </span>
-          <span
-            className="sidebar-user-role"
-            style={{ color: darkMode ? '#6b7280' : '#9ca3af' }}
-          >
-            Premium Member
-          </span>
-        </div>
-      </div>
+
     </aside>
   );
 }

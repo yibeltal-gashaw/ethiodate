@@ -92,10 +92,53 @@ export default function ConverterPage({ lang, darkMode }) {
 
   const handleShare = useCallback(() => {
     if (!result) return;
-    const text = `${result.gMonth} ${result.gDay}, ${result.gYear} = ${result.etMonthEn} ${result.et.day}, ${result.et.year} E.C.`;
-    if (navigator.share) navigator.share({ title: 'EthioDate Conversion', text });
-    else navigator.clipboard.writeText(text);
-  }, [result]);
+    
+    const text = lang === 'am'
+      ? `📅 ቀን ቀያሪ - EthioDate\n\n🌍 ጎርጎሮሲያን: ${result.gMonth} ${result.gDay}, ${result.gYear}\n🇪🇹 ኢትዮጵያ: ${result.etMonthAm} ${result.et.day}, ${result.et.year}\n${result.holiday ? `🎉 በዓል: ${result.holiday}\n` : ''}\n✨ በ EthioDate መተግበሪያ የተጋራ`
+      : `📅 Date Conversion - EthioDate\n\n🌍 Gregorian: ${result.gMonth} ${result.gDay}, ${result.gYear}\n🇪🇹 Ethiopian: ${result.etMonthEn} ${result.et.day}, ${result.et.year} E.C.\n${result.holiday ? `🎉 Holiday: ${result.holiday}\n` : ''}\n✨ Shared from the EthioDate app`;
+
+    if (navigator.share) {
+      navigator.share({ title: 'EthioDate Conversion', text }).catch(err => console.log('Error sharing', err));
+    } else {
+      navigator.clipboard.writeText(text);
+      alert(lang === 'am' ? 'ወደ ክሊፕቦርድ ተቀድቷል!' : 'Copied to clipboard!');
+    }
+  }, [result, lang]);
+
+  const handleAddToCalendar = useCallback(() => {
+    if (!result) return;
+    const { gDate, etMonthEn, etMonthAm, et, holiday } = result;
+    
+    const startDate = new Date(gDate);
+    const endDate = new Date(gDate);
+    endDate.setDate(endDate.getDate() + 1);
+
+    const formatCalDate = (date) => {
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      return `${yyyy}${mm}${dd}`;
+    };
+
+    const dtStart = formatCalDate(startDate);
+    const dtEnd = formatCalDate(endDate);
+    
+    const eventName = holiday 
+      ? (lang === 'am' ? `የኢትዮጵያ በዓል: ${holiday}` : `Ethiopian Holiday: ${holiday}`)
+      : (lang === 'am' ? `የኢትዮጵያ ቀን: ${etMonthAm} ${et.day}` : `Ethiopian Date: ${etMonthEn} ${et.day}, ${et.year}`);
+    
+    const description = lang === 'am' 
+      ? `በጎርጎሮሲያን: ${gDate.toDateString()}\nበኢትዮጵያ: ${etMonthAm} ${et.day}, ${et.year}`
+      : `Gregorian: ${gDate.toDateString()}\nEthiopian: ${etMonthEn} ${et.day}, ${et.year}`;
+      
+    const url = new URL('https://calendar.google.com/calendar/render');
+    url.searchParams.append('action', 'TEMPLATE');
+    url.searchParams.append('text', eventName);
+    url.searchParams.append('dates', `${dtStart}/${dtEnd}`);
+    url.searchParams.append('details', description);
+
+    window.open(url.toString(), '_blank', 'noopener,noreferrer');
+  }, [result, lang]);
 
   // ── Colours ──────────────────────────────────────────────────────────────
   const pageBg   = darkMode ? '#0f172a' : '#f9fafb';
@@ -270,7 +313,7 @@ export default function ConverterPage({ lang, darkMode }) {
 
           {/* Add to Calendar */}
           <button
-            onClick={() => {}}
+            onClick={handleAddToCalendar}
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
               padding: '12px 24px', borderRadius: 50,
