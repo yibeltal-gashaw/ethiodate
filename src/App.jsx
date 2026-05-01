@@ -8,6 +8,7 @@ import CalendarView from './components/CalendarView';
 import ConverterPage from './pages/ConverterPage';
 import HolidaysPage from './pages/HolidaysPage';
 import HolidayDetail from './pages/HolidayDetail';
+import FeedbackFAB from './components/FeedbackFAB';
 
 // ── Main shell ───────────────────────────────────────────────────────────────
 function MainShell() {
@@ -95,6 +96,8 @@ function MainShell() {
           EthioDate &mdash; {lang === 'am' ? 'ቀን ቀያሪ' : 'Ethiopian Calendar Converter'} &mdash; {new Date().getFullYear()}
         </footer>
       </div>
+
+      <FeedbackFAB />
     </div>
   );
 }
