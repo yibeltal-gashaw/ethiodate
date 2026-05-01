@@ -4,10 +4,8 @@ import { useApp } from './context/AppContext';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import HomePage from './pages/HomePage';
-import DateConverter from './components/DateConverter';
 import CalendarView from './components/CalendarView';
 import ConverterPage from './pages/ConverterPage';
-import HolidayPanel from './components/HolidayPanel';
 import HolidaysPage from './pages/HolidaysPage';
 import HolidayDetail from './pages/HolidayDetail';
 

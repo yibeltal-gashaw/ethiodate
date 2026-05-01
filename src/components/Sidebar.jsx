@@ -77,7 +77,7 @@ export default function Sidebar({ lang, darkMode, activeTab, setActiveTab }) {
       {/* Logo */}
       <button className="sidebar-logo" onClick={handleLogoClick} aria-label="EthioDate Home">
         <span className="sidebar-logo-text">
-          <span style={{ color: '#16a34a' }}>Ethio</span>Date
+          <span style={{ color: '#16a34a' }}>Ethio</span><span style={{color:darkMode?'#fff':'#000'}}>Date</span>
         </span>
         <span
           className="sidebar-logo-sub"
